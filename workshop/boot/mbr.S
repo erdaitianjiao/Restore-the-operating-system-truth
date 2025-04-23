@@ -1,6 +1,6 @@
 ;main boot program
 
-%include "boot.inc"
+%include "include/boot.inc"
 
 SECTION MBR vstart=0x7c00
     mov ax,cs
@@ -41,7 +41,7 @@ SECTION MBR vstart=0x7c00
 
     mov eax, LOADER_START_SECTOR    ;start of lba
     mov bx, LOADER_BASE_ADDR        ;address of write ram
-    mov cx, 1                       ;count of fans to write
+    mov cx, 4                       ;count of fans to write
     call rd_disk_m_16               ;next start address of fans
 
     jmp LOADER_BASE_ADDR
