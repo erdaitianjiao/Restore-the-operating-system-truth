@@ -34,7 +34,7 @@ SELECTOR_VIDEO equ (0x0003<<3) + TI_GDT + RPL0
 
 gdt_ptr dw GDT_LIMIT
         dd GDT_BASE
-loadermsg db '2 loader in real.$'
+loadermsg db '2 loader in real.'
 
 loader_start:
     
@@ -57,7 +57,7 @@ loader_start:
     ;no return value
     mov sp, LOADER_BASE_ADDR
     mov bp, loadermsg           ;ES: BP = the address of output
-    mov cx, 22                  ;CX = length of string
+    mov cx, 17                  ;CX = length of string
     mov ax, cs
     mov es, ax
     mov ax, 0x1301              ;AH = 13, AL = 01h
