@@ -34,7 +34,7 @@ SELECTOR_VIDEO equ (0x0003<<3) + TI_GDT + RPL0
 
 gdt_ptr dw GDT_LIMIT
         dd GDT_BASE
-loadermsg db '2 loader in real.'
+loadermsg db '2 loader in real.$'
 
 loader_start:
     
@@ -57,11 +57,18 @@ loader_start:
     ;no return value
     mov sp, LOADER_BASE_ADDR
     mov bp, loadermsg           ;ES: BP = the address of output
-    mov cx, 17                  ;CX = length of string
+    mov cx, 22                  ;CX = length of string
+    mov ax, cs
+    mov es, ax
     mov ax, 0x1301              ;AH = 13, AL = 01h
     mov bx, 0x001f              ;page is 0(BH = 0) blue background and red front(BL = 1fh)
     mov dx, 0x1800
     int 0x10
+
+;-------------------------test for pmode------------------------------;
+
+ 
+
 
 ;------------ready to get into protected mod------------;
 
@@ -80,7 +87,7 @@ loader_start:
     ;--------------set cr0 zero to 1------------;
     
     mov eax, cr0
-    or eax, 0x00000001
+    or  eax, 0x00000001
     mov cr0, eax
 
     jmp dword SELECTOR_CODE: p_mode_start       ;reflash stream
