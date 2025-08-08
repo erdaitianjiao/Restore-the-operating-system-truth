@@ -11,11 +11,11 @@ SECTION MBR vstart=0x7c00
     mov sp,0x7c00
     mov ax,0xb800
     mov gs,ax
-;clear device
-;0x06 function to clear
+    ;clear device
+    ;0x06 function to clear
     mov ax,0x600
     mov bx,0x700
-    mov cx,0                        ;
+    mov cx,0                        
     mov dx,0x184f
     int 10h
     
