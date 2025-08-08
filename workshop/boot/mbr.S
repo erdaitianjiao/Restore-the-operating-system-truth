@@ -1,6 +1,6 @@
 ;main boot program
 
-%include "include/boot.inc"
+%include "../include/boot.inc"
 
 SECTION MBR vstart=0x7c00
     mov ax,cs
