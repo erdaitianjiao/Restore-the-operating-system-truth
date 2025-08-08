@@ -1,8 +1,10 @@
-TI_GDT equ 0
-RPL0   equ 0
-SELECTOR_VIDEO equ (0x0003 << 3) + TI_GDT + RPL0
+TI_GDT equ 00b
+RPL0   equ 000b
+SELECTOR_VIDEO  equ (0x0003 << 3) + TI_GDT + RPL0
+SELECTOR_DATA   equ (0x0002 << 3) + TI_GDT + RPL0
 
 [bits 32]
+section .text
 
 ;-------------function name: put_char---------------
 ;function describe: put char into chosed situation
@@ -21,9 +23,10 @@ put_char:
     out dx, al
     mov dx, 0x03d5              ;set 0x3d5 to get or set mouse situation
     in  al, dx                  ;get high 8 bits
+    shl ax, 0x8
 
     ;low  8bits
-    mov bx, 0x04d4
+    mov dx, 0x03d4
     mov al, 0x0f
     out dx, al
     mov dx, 0x03d5
@@ -33,7 +36,7 @@ put_char:
     mov bx, ax
     
     ;get char from statk
-    mov ecx, [esp, +36]
+    mov byte cl, [esp + 36]
                             ;pushad 4 * 8 = 32 bits
                             ;return 4 bits, equal 36 bits
                             ;cr = 0x0d, lf = 0x0a
@@ -41,24 +44,27 @@ put_char:
     jz .is_carriage_return
     cmp cl, 0xa
     jz .is_line_feed
-    cmp cl 0x8
+    cmp cl, 0x8
     jz .is_backspace
+
     jmp .put_other
 
 ;deal with backspace
 .is_backspace:
+    cmp bx, 0
+    je .set_cursor
     dec bx                  
     shl bx, 1               ;bx * 2
 
     mov byte [gs: bx], 0x20
     inc bx
-    mov byte [gs, bx], 0x07
+    mov byte [gs: bx], 0x07
     shr bx, 1
     jmp .set_cursor
 
 .put_other:
     shl bx, 1
-    inc bx
+    
     mov byte [gs: bx], cl
     inc bx
     mov byte [gs: bx], 0x07
@@ -91,11 +97,11 @@ put_char:
     mov edi, 0xc00b8000
     rep movsd
 
-    mov ebx, 38400
+    mov ebx, 3840
     mov ecx, 80
 
 .cls:
-    mov word [gs: ebx] 0x720
+    mov word [gs: ebx], 0x720
     add ebx, 2
     loop .cls
     mov bx, 1920
@@ -112,6 +118,7 @@ put_char:
     mov al, 0x0f
     out dx, al
     mov dx, 0x03d5
+    mov al, dh
     out dx, al
 
 .put_char_done:
