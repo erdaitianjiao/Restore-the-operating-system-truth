@@ -132,6 +132,63 @@ loader_start:
     jmp $
     jmp dword SELECTOR_CODE:p_mode_start                       ;刷新流水线
  
+
+setup_page:
+    mov ecx,0x1000                                             ;循环4096次 将页目录项清空 内存清0
+    mov esi,0                                                   
+    .clear_page_dir_mem:                                          ;dir directory 把页目录项清空
+    mov byte [PAGE_DIR_TABLE_POS+esi],0
+    inc esi
+    loop .clear_page_dir_mem
+    
+    .create_pde: 
+    mov eax,PAGE_DIR_TABLE_POS				  ;页目录项 起始位置
+    add eax,0x1000                                              ;页目录项刚好4k字节 add eax即得第一个页表项的地址
+                                                                ;接下来我们要做的是 把虚拟地址1M下和3G+1M 两部分的1M内存在页目录项中都映射到物理地址0-0XFFFFF
+    or  eax, PG_P | PG_RW_W | PG_US_U                           ;哦 悟了 哈哈哈 这里设置为PG_US_U 是因为init在用户进程 如果这里设置成US_S 这样子连进内核都进不去了
+        
+    mov [PAGE_DIR_TABLE_POS+0x0],eax                             ;页目录项偏移0字节与偏移0xc00 对应0x 一条页目录项对应2^22位4MB 偏移由前10位*4字节得到 可自己推算一下
+    mov [PAGE_DIR_TABLE_POS+0xc00],eax                        
+    sub eax,0x1000      
+    
+    mov [PAGE_DIR_TABLE_POS+4092],eax                           ;虚拟内存最后一个目录项 指向页目录表自身 书上写的是为了动态操纵页表 我也不是很清楚 反正有用 先放放
+
+;这里就创建了一页页表    
+    mov eax,PAGE_DIR_TABLE_POS
+    add eax,0x1000
+    mov ecx,256
+    mov esi,0
+    mov ebx,PG_P | PG_RW_W | PG_US_U 
+    
+    .create_kernel_pte:           
+    mov [eax+esi*4],ebx
+    inc esi
+    add ebx,0x1000
+    loop .create_kernel_pte 
+    
+    
+;这里对于我们这里填写的目录项所对应的页表 页表中我们还没填写的值
+;为了实现 真正意义上的 内核空间被用户进程完全共享
+;只是把页目录与页表的映射做出来了 
+
+    mov eax,PAGE_DIR_TABLE_POS
+    add eax,0x2000       					   ;eax此时处于第二个页表
+    or  eax,PG_P | PG_RW_W | PG_US_U
+;这里循环254次可以来分析一下 我们这里做的是 0xc0 以上部分的映射    0xc0 对应的是第768个页表项 页表项中一共有 2^10=1024项
+;第1023项我们已经设置成 映射到页目录项本身位置了 即1022 - 769 +1 = 254
+    mov ebx,PAGE_DIR_TABLE_POS
+    mov ecx,254						  
+    mov esi,769
+        
+    .create_kernel_pde:
+    mov [ebx+esi*4],eax
+    inc esi
+    add eax,0x1000
+    loop .create_kernel_pde 
+    
+    ret
+        
+
  [bits 32]
  p_mode_start: 
     mov ax,SELECTOR_DATA

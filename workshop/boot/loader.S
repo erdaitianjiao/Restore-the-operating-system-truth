@@ -144,37 +144,6 @@ loader_start:
     or  eax, 0x00000001
     mov cr0, eax
     
-;-----------------create page-----------------;
-    call setup_page
-
-    ;reload 
-    sgdt [gdt_ptr]
-    
-    ;mend gdt_ptr
-    mov ebx, [gdt_ptr + 2]
-    or dword [ebx + 0x18 + 4], 0xc0000000
-    
-    add dword [gdt_ptr + 2], 0xc0000000
-    
-    ;stack into kernel space
-    add esp, 0xc0000000
-    
-    ;put page address to cr3
-    mov eax, PAGE_DIR_TABLE_POS
-    mov cr3, eax
-    
-    ;open cr0 31 bits
-    mov eax, cr0
-    or eax, 0x80000000
-    mov cr0, eax
-    
-    ;reload gdt
-    lgdt [gdt_ptr]
-    
-    mov byte[gs: 160], "v"
-    jmp $
-
-
     jmp dword SELECTOR_CODE: p_mode_start       ;reflash stream
 
 
@@ -190,7 +159,7 @@ setup_page:
 ;create pde(Page Directory Entry)
 .create_pde:
     mov eax, PAGE_DIR_TABLE_POS
-    add eax, 0x10000                            ;point to the first pde
+    add eax, 0x1000                            ;point to the first pde
     mov ebx, eax
 
     ;put number 0 and number c00 the same pde every pde stand for 4mb
@@ -242,6 +211,32 @@ p_mode_start:
     mov ax, SELECTOR_VIDEO
     mov gs, ax
 
-    mov byte [gs: 160], 'P'
+    ;-----------------create page-----------------;
+    call setup_page
 
+    ;reload 
+    sgdt [gdt_ptr]
+    
+    ;mend gdt_ptr
+    mov ebx, [gdt_ptr + 2]
+    or dword [ebx + 0x18 + 4], 0xc0000000
+    
+    add dword [gdt_ptr + 2], 0xc0000000
+    
+    ;stack into kernel space
+    add esp, 0xc0000000
+    
+    ;put page address to cr3
+    mov eax, PAGE_DIR_TABLE_POS
+    mov cr3, eax
+    
+    ;open cr0 31 bits
+    mov eax, cr0
+    or eax, 0x80000000
+    mov cr0, eax
+    
+    ;reload gdt
+    lgdt [gdt_ptr]
+    
+    mov byte[gs: 160], "v"
     jmp $
