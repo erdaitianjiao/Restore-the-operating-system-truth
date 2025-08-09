@@ -128,6 +128,8 @@ loader_start:
     mov cr0,eax
       
 ;-------------------------------- 已经打开保护模式 ---------------------------------------
+    mov byte [gs:160],'P'
+    jmp $
     jmp dword SELECTOR_CODE:p_mode_start                       ;刷新流水线
  
  [bits 32]

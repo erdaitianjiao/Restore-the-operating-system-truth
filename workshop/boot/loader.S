@@ -46,28 +46,29 @@ jmp loader_start
     
     ;total_mem_bytes4 + gdt_ptr6+ards_buf244 + ards_nr2 = 256
     ards_buf times 244 db 0
-    ards_nr  dw 0                                    ;used to record number of struct ards
+    ards_nr  dw 0                                   ;used to record number of struct ards
 
 loader_start:
 
-    xor ebx, 20
-    mov edx, 0x534d4150
-    mov di,  ards_buf
+    xor ebx, ebx                                    ;set ebx to 20
+    mov edx, 0x534d4150                                  
+    mov di,  ards_buf                               ;set up buf
 
-.e820_mem_get_loop:
-    mov eax, 0x0000e820
-    mov ecx, 20
+.e820_mem_get_loop:                                 ;loop get ards memory range struct
+    mov eax, 0x0000e820                             ;revalue eax
+    mov ecx, 20                                     ;ards address describe sizeof 20 bytes
 
     int 0x15
-    jc .e820_failed_so_try_e801
-    add di, cx
+    jc .e820_failed_so_try_e801                     ;if cf equal 1 that error occured
+    add di, cx                                      ;add di 20 to point next ards
     inc word [ards_nr]
-    cmp eax, 0
-    jnz .e820_mem_get_loop
+    cmp eax, 0                                      ;if eax 0 and cf != 1 , got all the ards
+    jnz .e820_mem_get_loop                         
 
-    mov cx, [ards_nr]
+    ;get max size of mem
+    mov cx, [ards_nr]                               ;count
     mov ebx, ards_buf
-    xor edx, edx
+    xor edx, edx                                    ;clear to zero
 
 .find_max_mem_area:
     mov eax, [ebx]
@@ -81,11 +82,13 @@ loader_start:
     loop .find_max_mem_area
     jmp .mem_get_ok
 
+;use 801 ,max get 4G mem
 .e820_failed_so_try_e801:
     mov ax, 0xe801
     int 0x15
     jc .e801_failed_so_try_88
-    
+ 
+    ;calculate lower than 16 men
     mov cx, 0x400
     mul cx
     shl edx, 16
@@ -94,6 +97,7 @@ loader_start:
     add edx, 0x100000
     mov esi, edx
     
+    ;upper than 16m translate to byte
     xor eax, eax
     mov ax, bx
     mov ecx, 0x10000
@@ -102,6 +106,7 @@ loader_start:
     add edx, eax
     jmp .mem_get_ok
 
+;use 88 max get 64mb
 .e801_failed_so_try_88:
     mov ah, 0x88
     int 0x15
@@ -118,8 +123,6 @@ loader_start:
     jmp $
 .mem_get_ok:
     mov [total_mem_bytes], edx
-
-;-------------------------test for pmode------------------------------;
 
 ;------------ready to get into protected mod------------;
 
@@ -140,8 +143,94 @@ loader_start:
     mov eax, cr0
     or  eax, 0x00000001
     mov cr0, eax
+    
+;-----------------create page-----------------;
+    call setup_page
+
+    ;reload 
+    sgdt [gdt_ptr]
+    
+    ;mend gdt_ptr
+    mov ebx, [gdt_ptr + 2]
+    or dword [ebx + 0x18 + 4], 0xc0000000
+    
+    add dword [gdt_ptr + 2], 0xc0000000
+    
+    ;stack into kernel space
+    add esp, 0xc0000000
+    
+    ;put page address to cr3
+    mov eax, PAGE_DIR_TABLE_POS
+    mov cr3, eax
+    
+    ;open cr0 31 bits
+    mov eax, cr0
+    or eax, 0x80000000
+    mov cr0, eax
+    
+    ;reload gdt
+    lgdt [gdt_ptr]
+    
+    mov byte[gs: 160], "v"
+    jmp $
+
 
     jmp dword SELECTOR_CODE: p_mode_start       ;reflash stream
+
+
+;----------create directory and page table--------------;
+setup_page:
+    mov ecx, 4096                               ;clear the page space
+    mov esi, 0
+
+.clear_page_dir:
+    mov byte [PAGE_DIR_TABLE_POS + esi], 0
+    inc esi
+    loop .clear_page_dir
+;create pde(Page Directory Entry)
+.create_pde:
+    mov eax, PAGE_DIR_TABLE_POS
+    add eax, 0x10000                            ;point to the first pde
+    mov ebx, eax
+
+    ;put number 0 and number c00 the same pde every pde stand for 4mb
+    ;this is prepared for kernel address
+    or eax, PG_US_U | PG_RW_W | PG_P            ;set P 1, set US 1, every privaty have access to this
+    mov [PAGE_DIR_TABLE_POS + 0x0]  , eax
+    mov [PAGE_DIR_TABLE_POS + 0xc00], eax
+    
+    ;every page sizeof 4 bytes
+    ;0xc00 stand 786 page, upper than 0xc00 is kernel space
+    ;0xc0000000 - 0xffffffff is kernel space
+    ;0x0 0xbfffffff is user space
+
+    sub eax, 0x1000
+    mov [PAGE_DIR_TABLE_POS + 4092], eax        ;make last page point to itself
+
+    ;create PTE(Page Table Entry)
+    mov ecx, 256
+    mov esi, 0
+    mov edx, PG_US_U | PG_RW_W | PG_P
+
+.create_pte:
+    ;ebx = 0x101000
+    mov [ebx + esi *4], edx
+    add edx, 4096
+    inc esi
+    loop .create_pte
+
+;create other pde
+    mov eax, PAGE_DIR_TABLE_POS
+    add eax, 0x2000                 ;now eax is at the second page table
+    or eax, PG_US_U | PG_RW_W | PG_P
+    mov ecx, 254
+    mov esi, 769
+.create_kernel_pde:
+    mov [ebx + esi * 4], eax
+    inc esi
+    add eax, 0x1000
+    loop .create_kernel_pde
+    ret
 
 [bits 32]
 p_mode_start:
