@@ -28,7 +28,7 @@ jmp loader_start
     ;the capicaty of loader is 0x200 
     ;loader.bin is loaded at 0x900
     ;so total_mem_byte is 0xb00
-    total_mem_bytes dd 0x0000000
+    total_mem_bytes dd 0
 
     SELECTOR_CODE  equ (0x0001 << 3) + TI_GDT + RPL0
     ;equal to (CODE_DESC - GDT_BASE)/8 + TI_GDT + RPL0
@@ -47,7 +47,6 @@ jmp loader_start
     ;total_mem_bytes4 + gdt_ptr6+ards_buf244 + ards_nr2 = 256
     ards_buf times 244 db 0
     ards_nr  dw 0                                   ;used to record number of struct ards
-
 loader_start:
 
     xor ebx, ebx                                    ;set ebx to 20
@@ -121,9 +120,10 @@ loader_start:
 
 .error_hlt:
     jmp $
+
 .mem_get_ok:
     mov [total_mem_bytes], edx
-
+    
 ;------------ready to get into protected mod------------;
 
     ;first step: switch on A20
@@ -145,61 +145,6 @@ loader_start:
     mov cr0, eax
     
     jmp dword SELECTOR_CODE: p_mode_start       ;reflash stream
-
-
-;----------create directory and page table--------------;
-setup_page:
-    mov ecx, 4096                               ;clear the page space
-    mov esi, 0
-
-.clear_page_dir:
-    mov byte [PAGE_DIR_TABLE_POS + esi], 0
-    inc esi
-    loop .clear_page_dir
-;create pde(Page Directory Entry)
-.create_pde:
-    mov eax, PAGE_DIR_TABLE_POS
-    add eax, 0x1000                            ;point to the first pde
-    mov ebx, eax
-
-    ;put number 0 and number c00 the same pde every pde stand for 4mb
-    ;this is prepared for kernel address
-    or eax, PG_US_U | PG_RW_W | PG_P            ;set P 1, set US 1, every privaty have access to this
-    mov [PAGE_DIR_TABLE_POS + 0x0]  , eax
-    mov [PAGE_DIR_TABLE_POS + 0xc00], eax
-    
-    ;every page sizeof 4 bytes
-    ;0xc00 stand 786 page, upper than 0xc00 is kernel space
-    ;0xc0000000 - 0xffffffff is kernel space
-    ;0x0 0xbfffffff is user space
-
-    sub eax, 0x1000
-    mov [PAGE_DIR_TABLE_POS + 4092], eax        ;make last page point to itself
-
-    ;create PTE(Page Table Entry)
-    mov ecx, 256
-    mov esi, 0
-    mov edx, PG_US_U | PG_RW_W | PG_P
-
-.create_pte:
-    ;ebx = 0x101000
-    mov [ebx + esi *4], edx
-    add edx, 4096
-    inc esi
-    loop .create_pte
-
-;create other pde
-    mov eax, PAGE_DIR_TABLE_POS
-    add eax, 0x2000                 ;now eax is at the second page table
-    or eax, PG_US_U | PG_RW_W | PG_P
-    mov ecx, 254
-    mov esi, 769
-.create_kernel_pde:
-    mov [ebx + esi * 4], eax
-    inc esi
-    add eax, 0x1000
-    loop .create_kernel_pde
-    ret
 
 [bits 32]
 p_mode_start:
@@ -240,3 +185,62 @@ p_mode_start:
     
     mov byte[gs: 160], "v"
     jmp $
+
+
+
+;------------create directory and page table--------------;
+setup_page:
+    mov ecx, 4096                               ;clear the page space
+    mov esi, 0
+
+.clear_page_dir:
+    mov byte [PAGE_DIR_TABLE_POS + esi], 0
+    inc esi
+    loop .clear_page_dir
+;create pde(Page Directory Entry)
+.create_pde:
+    mov eax, PAGE_DIR_TABLE_POS
+    add eax, 0x1000                            ;point to the first pde
+    mov ebx, eax
+
+    ;put number 0 and number c00 the same pde every pde stand for 4mb
+    ;this is prepared for kernel address
+    or eax, PG_US_U | PG_RW_W | PG_P            ;set P 1, set US 1, every privaty have access to this
+    mov [PAGE_DIR_TABLE_POS + 0x0]  , eax
+    mov [PAGE_DIR_TABLE_POS + 0xc00], eax
+    
+    ;every page sizeof 4 bytes
+    ;0xc00 stand 786 page, upper than 0xc00 is kernel space
+    ;0xc0000000 - 0xffffffff is kernel space
+    ;0x0 0xbfffffff is user space
+
+    sub eax, 0x1000
+    mov [PAGE_DIR_TABLE_POS + 4092], eax        ;make last page point to itself
+                          
+    ;create PTE(Page Table Entry)
+    mov eax, PAGE_DIR_TABLE_POS
+    add eax, 0x1000
+    mov ecx, 256
+    mov esi, 0
+    mov ebx, PG_US_U | PG_RW_W | PG_P
+
+.create_pte:
+    ;eax = 0x101000
+    mov [eax + esi * 4], ebx
+    add ebx, 4096
+    inc esi
+    loop .create_pte
+
+;create other pde
+    mov eax, PAGE_DIR_TABLE_POS
+    add eax, 0x2000                                         ;now eax is at the second page table
+    or eax, PG_US_U | PG_RW_W | PG_P
+    mov ebx, PAGE_DIR_TABLE_POS
+    mov ecx, 254
+    mov esi, 769
+.create_kernel_pde:
+    mov [ebx + esi * 4], eax
+    inc esi
+    add eax, 0x1000
+    loop .create_kernel_pde
+    ret    
