@@ -4,13 +4,34 @@ SELECTOR_VIDEO  equ (0x0003 << 3) + TI_GDT + RPL0
 SELECTOR_DATA   equ (0x0002 << 3) + TI_GDT + RPL0
 
 [bits 32]
+
+section .date
+
+put_int_buffer dq 0
+
 section .text
 
 ;-------------function name: put_str---------------
 ;function describe: put string into chosed situation
 global put_str
 put_str:
-   
+   push ebx
+   push ecx
+   xor ecx, ecx
+   mov ebx, [esp + 12]
+.goon:
+   mov cl, [ebx]
+   cmp cl, 0
+   jz .str_over
+   push ecx
+   call put_char
+   add esp, 4
+   inc ebx
+   jmp .goon
+.str_over:
+   pop ecx
+   pop ebx
+   ret
 
 ;-------------function name: put_char---------------
 ;function describe: put char into chosed situation
@@ -133,3 +154,59 @@ put_char:
 .put_char_done:
     popad
     ret
+
+global put_int
+put_int:
+   pushad
+   mov ebp, esp
+   mov eax, [ebp + 4 * 9]
+   mov edx, eax
+   mov edi, 7
+   mov ecx, 8
+   mov ebx, put_int_buffer
+.16based_4bits:
+   and edx, 0x0000000F
+   cmp edx, 9
+   jg .is_A2F
+   add edx, '0'
+   jmp .store
+
+.is_A2F:
+   sub edx, 10
+   add edx, 'A'
+
+.store:
+   mov [ebx + edi], dl
+   dec edi
+   shr eax, 4
+   mov edx, eax
+   loop .16based_4bits
+
+.ready_to_print:
+   inc edi
+
+.skip_prefix_0:
+   cmp edi, 8
+   je .full0
+
+.go_on_skip:
+   mov cl, [put_int_buffer + edi]
+   inc edi
+   cmp cl, '0'
+   je .skip_prefix_0
+   dec edi
+   jmp .put_each_num
+
+.full0:
+   mov cl , '0'
+
+.put_each_num:
+   push ecx
+   call put_char
+   add esp, 4
+   inc edi
+   mov cl, [put_int_buffer + edi]
+   cmp edi, 8
+   jl .put_each_num
+   popad 
+   ret

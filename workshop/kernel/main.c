@@ -2,27 +2,12 @@
 
 int main() {
 
-    put_char('k');
-    put_char('e');
-    put_char('r');
-    put_char('n');
-    put_char('e');
-    put_char('l');
-    put_char('!');
-    put_char('\n');
-    put_char('i');
-    put_char('m');
-    put_char(' ');
-    put_char('c');
-    put_char('u');
-    put_char('m');
-    put_char('1'); //这里的1是看退格是否生效 
-                    //输出时只要是kernel! im coming!即可
-    put_char('\b');
-    put_char('i');
-    put_char('n');
-    put_char('g');
-    put_char('!');
+    put_str("kernel! i am cuming\n");
+    put_int(4);
+    put_str("dasf\n");
+    put_int(16);
+    put_str("\n");
+    put_int(999);
     while(1);
     return 0;
     
