@@ -156,6 +156,13 @@ p_mode_start:
     mov ax, SELECTOR_VIDEO
     mov gs, ax
 
+    ;-----------------load kernel-----------------;
+    mov eax, KERNEL_START_SECTION                   ;kernel.bin section
+    mov ebx, KERNEL_BIN_BASE_ADDR
+    mov ecx, 200                                    ;count of section
+
+    call rd_disk_m_32
+
     ;-----------------create page-----------------;
     call setup_page
 
@@ -182,11 +189,16 @@ p_mode_start:
     
     ;reload gdt
     lgdt [gdt_ptr]
+
+    jmp SELECTOR_CODE: enter_kernel
     
     mov byte[gs: 160], "v"
     jmp $
 
-
+enter_kernel:
+    call kernel_init
+    mov esp, 0x009f000
+    jmp KERNEL_ENTER_POINT
 
 ;------------create directory and page table--------------;
 setup_page:
@@ -244,3 +256,119 @@ setup_page:
     add eax, 0x1000
     loop .create_kernel_pde
     ret    
+
+;
+kernel_init:
+    xor eax, eax            
+    xor ebx, ebx            ;used to record program head
+    xor ecx, ecx            ;used to record count of program head
+    xor edx, edx            ;used to record size of head
+
+    mov dx,  [KERNEL_BIN_BASE_ADDR + 42]
+    mov ebx, [KERNEL_BIN_BASE_ADDR + 28]
+
+    add ebx, KERNEL_BIN_BASE_ADDR
+    mov cx, [KERNEL_BIN_BASE_ADDR + 44]
+
+.each_segment:
+    cmp byte [ebx + 0], PT_NULL
+    je .PT_NULL
+    push dword [ebx + 16]
+
+    mov eax, [ebx + 4]
+    add eax, KERNEL_BIN_BASE_ADDR
+
+    push eax
+    push dword [ebx + 8]
+
+    call mem_cpy
+    add esp, 12
+
+.PT_NULL:
+    add ebx, edx
+
+    loop .each_segment
+    ret
+
+;----------------逐字节拷贝函数 mem_cpy-------------------;
+mem_cpy:
+    cld
+    push ebp
+    mov ebp, esp
+    push ecx
+
+    mov edi, [ebp + 8]
+    mov esi, [ebp + 12]
+    mov ecx, [ebp + 16]
+    
+    rep movsb
+
+    pop ecx
+    pop ebp
+    ret
+
+
+
+rd_disk_m_32:
+
+    mov esi,eax   
+    mov di,cx     
+    
+    mov dx,0x1F2  
+    mov al,cl    
+    out dx,al     
+    
+    mov eax,esi   
+    
+
+    ;2 写入LBA 24位寄存器 确认扇区
+    mov cl,0x8    
+
+    mov dx,0x1F3  
+    out dx,al 
+    
+    mov dx,0x1F4 
+    shr eax,cl   
+    out dx,al
+    
+    mov dx,0x1F5
+    shr eax,cl
+    out dx,al
+    
+    ;3 device 寄存器 第4位主次盘 第6位LBA模式 改为1
+	  
+    shr eax,cl
+    
+    and al,0x0f 
+    or al,0xe0   
+    mov dx,0x1F6  
+    out dx,al
+    ;4 向Command写操作 Status和Command一个寄存器
+
+
+    mov dx,0x1F7 
+    mov ax,0x20  
+    out dx,al
+    
+    ;5 向Status查看是否准备好惹 
+       
+  .not_ready:     
+    nop           
+    in al,dx      
+    and al,0x88   
+    cmp al,0x08
+    jne .not_ready 
+    
+    ;6 读取数据
+
+    mov ax,di     
+    mov dx,256
+    mul dx        
+    mov cx,ax      
+    mov dx,0x1F0
+ .go_read_loop:
+    in ax,dx      
+    mov [ebx],ax
+    add ebx,2
+    loop .go_read_loop
+    ret 

@@ -14,7 +14,7 @@ int main() {
     put_char('m');
     put_char(' ');
     put_char('c');
-    put_char('o');
+    put_char('u');
     put_char('m');
     put_char('1'); //这里的1是看退格是否生效 
                     //输出时只要是kernel! im coming!即可
