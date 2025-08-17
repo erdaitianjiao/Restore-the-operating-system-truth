@@ -1,13 +1,12 @@
 #include "init.h"
 #include "print.h"
 #include "interrupt.h"
+#include "../device/timer.h"
 
 int main() {
 
     put_str("hello kernel!\n");
-    idt_init();
+    init_all();
     asm volatile("sti");
     while(1);
-    return 0;
-    
 }

@@ -4,6 +4,7 @@
 %define ZERO push 0                     ; 压入错误码 如果没有就压入0
 
 extern put_str
+extern idt_table                        ; c中注册的中断处理程序数组
 
 section .data
 intr_str db "interrupt occur", 0xa, 0
@@ -17,23 +18,41 @@ section .text
 intr%1entry:                            ; 得到每个中断的向量号
 
     %2
-    push intr_str
-    call put_str
-    add esp, 4                          ; 跳过参数
+    ; 保存上下文环境
+    push ds
+    push es
+    push fs
+    push gs
+    pushad                              ; pushad指令压入32位寄存器 入栈顺序为 eax ecx edx ebx esp ebp esi esi
+
     
     ; 如果是从片上进入中断 得向从片和主片分别发送EOI
     mov al, 0x20                        ; 中断结束命令EOI
     out 0xa0, al                        ; 向从片发送
     out 0x20, al                        ; 给主片发送
 
-    add esp, 4                          ; 跳过error_code
-    iret                                ; 从中断返回
+    push %1                             ; 不管idt_table中目标函数需不需要参数 一律压入
+    call [idt_table + %1 * 4]           ; 调用idt_table中的c版本中断处理函数
+    jmp intr_exit       
 
 section .data
     dd intr%1entry                      ; 存储各个中断的入口程序的地址
                                         ; 形成intry_entry_table数组
 
 %endmacro
+
+section .text
+global intr_exit
+intr_exit:
+    ; 恢复上下文环境
+    add esp, 4                          ; 跳过中断号
+    popad
+    pop gs
+    pop fs
+    pop es
+    pop ds
+    add esp, 4                          ; 跳过error_code
+    iretd
 
 VECTOR 0x00, ZERO
 VECTOR 0x01, ZERO
@@ -43,16 +62,16 @@ VECTOR 0x04, ZERO
 VECTOR 0x05, ZERO
 VECTOR 0x06, ZERO
 VECTOR 0x07, ZERO
-VECTOR 0x08, ZERO
+VECTOR 0x08, ERROR_CODE
 VECTOR 0x09, ZERO
-VECTOR 0x0a, ZERO
-VECTOR 0x0b, ZERO
-VECTOR 0x0c, ZERO
-VECTOR 0x0d, ZERO
-VECTOR 0x0e, ZERO
+VECTOR 0x0a, ERROR_CODE
+VECTOR 0x0b, ERROR_CODE
+VECTOR 0x0c, ERROR_CODE
+VECTOR 0x0d, ERROR_CODE
+VECTOR 0x0e, ERROR_CODE
 VECTOR 0x0f, ZERO
 VECTOR 0x10, ZERO
-VECTOR 0x11, ZERO
+VECTOR 0x11, ERROR_CODE
 VECTOR 0x12, ZERO
 VECTOR 0x13, ZERO
 VECTOR 0x14, ZERO
