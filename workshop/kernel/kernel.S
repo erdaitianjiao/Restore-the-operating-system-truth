@@ -18,7 +18,7 @@ intr%1entry:                            ; 得到每个中断的向量号
 
     %2
     push intr_str
-    call push_str
+    call put_str
     add esp, 4                          ; 跳过参数
     
     ; 如果是从片上进入中断 得向从片和主片分别发送EOI

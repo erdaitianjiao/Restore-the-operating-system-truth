@@ -10,6 +10,29 @@
 
 #define IDT_DESC_CNT    0x21
 
+static void pic_init(void) {
+
+    // 初始化主片
+    outb(PIC_M_CTRL, 0x11);         // ICW1 边沿触发 需要ICW4
+    outb(PIC_M_DATA, 0x20);         // ICW2 起始中断向量号为0x20 IR[0 - 7] 为 0x20 -0x27
+
+    outb(PIC_M_DATA, 0x04);         // ICW3 IR2 接从片
+    outb(PIC_M_DATA, 0x01);         // ICW4 8086模式
+
+
+    // 初始化从片
+    outb(PIC_S_CTRL, 0x11);         // ICW1 边沿出发 级联8259 需要 ICW4
+    outb(PIC_S_DATA, 0x28);         // ICW2 起始中断向量号为0x28
+
+    outb(PIC_S_DATA, 0x02);         // ICW3 设置从片连接到主片IR2引脚
+    outb(PIC_S_DATA, 0x01);         // ICW4 8086模式 正常EOI
+
+    // 打开主片上的IR0 只接受时钟产生的中断
+    outb(PIC_M_DATA, 0xfe);
+    outb(PIC_S_DATA, 0xff);
+
+}
+
 // 中断描述结构体
 struct gate_desc {
 
@@ -63,6 +86,7 @@ void idt_init() {
     // 加载idt
     uint64_t idt_operand = ((sizeof(idt) - 1) | ((uint64_t)((uint32_t)idt << 16)));
     asm volatile("lidt %0" : : "m" (idt_operand));
+    put_str("idt_init done\n");
 
 }
 

@@ -16,7 +16,7 @@ jmp loader_start
     DATA_STACK_DESC:    dd 0x0000FFFF
                         dd DESC_DATA_HIGH4
 
-    VIDEO_DESC:         dd 0x80000007             ;limit = (0xbffff - 0xb8000) / 4k = 0x7
+    VIDEO_DESC:         dd 0x80000007               ;limit = (0xbffff - 0xb8000) / 4k = 0x7
                         dd DESC_VIDEO_HIGH4         ;now dpl is 0
 
     GDT_SIZE   equ $ - GDT_BASE

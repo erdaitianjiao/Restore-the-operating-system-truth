@@ -1,13 +1,12 @@
+#include "init.h"
 #include "print.h"
+#include "interrupt.h"
 
 int main() {
 
-    put_str("kernel! i am cuming\n");
-    put_int(4);
-    put_str("dasf\n");
-    put_int(16);
-    put_str("\n");
-    put_int(999);
+    put_str("hello kernel!\n");
+    idt_init();
+    asm volatile("sti");
     while(1);
     return 0;
     
