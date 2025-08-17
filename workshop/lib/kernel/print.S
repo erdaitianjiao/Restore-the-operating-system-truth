@@ -10,7 +10,6 @@ section .date
 put_int_buffer dq 0
 
 section .text
-
 ;-------------function name: put_str---------------
 ;function describe: put string into chosed situation
 global put_str
