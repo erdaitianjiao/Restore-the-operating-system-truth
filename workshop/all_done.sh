@@ -8,4 +8,5 @@ gcc -m32 -I lib/kernel -c -o build/timer.o device/timer.c
 
 ld -m elf_i386 -Ttext 0xc0001500 -e main -o build/kernel.bin build/main.o build/init.o build/interrupt.o build/print.o build/kernel.o build/timer.o
 
+
 cp build/kernel.bin ../bochs/binfile

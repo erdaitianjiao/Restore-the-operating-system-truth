@@ -1,4 +1,4 @@
-;main boot program
+; 主引导程序
 
 %include "../include/boot.inc"
 
@@ -11,18 +11,27 @@ SECTION MBR vstart=0x7c00
     mov sp,0x7c00
     mov ax,0xb800
     mov gs,ax
-    ;clear device
-    ;0x06 function to clear
+    
+    ; 利用0x06功能号进行清屏
+    ; int 0x10 功能号 0x06  功能 上卷窗口
+    ; 输入
+    ; ah 功能号 0x06 
+    ; al 上卷的行数 (如果为0 则表示全部上卷)
+    ; bh 上卷行的属性
+    ; (cl, ch) 窗口左上角位置
+    ; (dl, dh) 窗口右下角位置
+    ; 无返回值
+
     mov ax,0x600
     mov bx,0x700
     mov cx,0                        
-    mov dx,0x184f
+    mov dx,0x184f       ; VGA文本模式中,一行只能容纳80个字符 共25行
+                        ; 下标从0开始 所以0x18=24 0x4f=79                                  
     int 10h
     
-    ;A stand for Green background
-    ;B stand for Red front color
-    
-    ;out put string "1MBR"
+    ; A表示绿色背景闪烁
+    ; 4表示前景色为红色
+    ;输出字符串 "1MBR"
 
     mov byte [gs:0x00],'1'
     mov byte [gs:0x01],0xA4
@@ -39,70 +48,78 @@ SECTION MBR vstart=0x7c00
     mov byte [gs:0x08],'R'
     mov byte [gs:0x09],0xA4
 
-    mov eax, LOADER_START_SECTOR    ;start of lba
-    mov bx, LOADER_BASE_ADDR        ;address of write ram
-    mov cx, 4                       ;count of fans to write
-    call rd_disk_m_16               ;next start address of fans
+    mov eax, LOADER_START_SECTOR    ; 起始位置LBA位置
+    mov bx, LOADER_BASE_ADDR        ; 读取的位置
+    mov cx, 4                       ; 待读取的扇区数
+    call rd_disk_m_16               ; 读取扇区的起始部分 (一个扇区)
 
     jmp LOADER_BASE_ADDR
-    
+
+; 从磁盘读取n个扇区
 rd_disk_m_16:
+
+    ; eax LBA 扇区号
+    ; bx  将数据写入的内存地址
+    ; cx  读入的扇区数量
+
     mov esi, eax
-    mov di, cx                      ;backup for two index
-    ;read and write disk
-    ;first step: set the number of fans to write
+    mov di, cx                      ; 备份eax 和 cx
+
+    ; 读写磁盘
+    ; 1 设置要读取的扇区数量
     
     mov dx, 0x1f2
     mov al, cl
-    out dx, al                      ;the number
+    out dx, al                      ; 数量
 
-    mov eax, esi                    ;get back ax
+    mov eax, esi                    ; 恢复ax
     
-    ;second step: set address of LBA to 0x1f3 - 0x1f6
+    ; 2 将LBA地址存入0x1f3 - 0x1f6 
     
-    ;LBA 7 - 0 bit to 0x1f3
+    ; LBA 7 - 0 位写入端口 0x1f3
     mov dx, 0x1f3
     out dx, al
 
-    ;LBA 15 - 8 bit to 0x1f4
+    ; LBA 15 - 8 位写入端口 0x1f4
     mov cl, 8
     shr eax, cl
     mov dx, 0x1f4
     out dx, al
 
-    ;LBA 23 - 16 bit to 0x1f5
+    ;LBA 23 - 16 位写入端口 0x1f5
     shr eax, cl
     mov dx, 0x1f5
     out dx, al
 
     
     shr eax, cl
-    and al, 0x0f                  ;LBA 24 - 27
-    or  al, 0xe0                   ;set 7 - 4bit as 1110, stand for LBA mod
+    and al, 0x0f                   ; LBA 第 24 - 27 位
+    or  al, 0xe0                   ; 设置 7 - 4 位为1110,表示lba模式
     mov dx, 0x1f6
     out dx, al
     
-    ;third step: write read order to 0x1f7, 0x20
+    ; 3 向 0x1f7 端口写入读命令 0x20
     mov dx, 0x1f7
     mov al, 0x20
     out dx, al
 
-    ;forth step: check up status of disk
+    ; 4 检测硬盘状态
 .not_ready:
-    ;as the same port
+    ; 同一端口 写时表示写入命令字 读时表示读入硬盘状态
     nop
     in al, dx
-    and al, 0x88                    ;forth bit as 1 stand for raddy seventh bit as 1 stand for busy
-
+    and al, 0x88                    ; 第4位为1表示硬盘控制器已准备好数据传输
+                                    ; 第7位为1表示硬盘忙
     cmp al, 0x08
-    jnz .not_ready                  ;while not ready, keepping waiting
+    jnz .not_ready                  ; 没有准备好就继续等待
 
-    ;fivth step: read data from port of 0x1f0
+    ; 5 从 0x1f0 端口读数据
     mov ax, di
     mov dx, 256
     mul dx
     mov cx, ax
-    ;di stand for the number of section, each section has 512 bits, each time read one bits, all need di*512/2 times, 
+    ; di为要读取的扇区数 一个扇区有512字节 每次读入一个字 
+    ; 共需di*512/2次 所以di*256
     mov dx, 0x1f0
 .go_on_read:
     in ax, dx
