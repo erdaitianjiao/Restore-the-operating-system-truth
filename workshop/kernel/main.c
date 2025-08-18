@@ -2,14 +2,15 @@
 #include "print.h"
 #include "interrupt.h"
 #include "debug.h"
+#include "string.h"
 
-int main() {
+int main(void) {
 
     put_str("hello kernel!\n");
     init_all();
-    
-    ASSERT(1 == 2);
-    while(1);
+
+    ASSERT(strcmp("bbb","bbb"));
+    while (1);
     return 0;
 
 }

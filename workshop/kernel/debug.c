@@ -15,6 +15,6 @@ void panic_spin(char* filename,
     put_str("Func: ");put_str((char*)func);put_char('\n');
     put_str("Condition: ");put_str((char*)condition);put_char('\n');
     
-    while(1);
+    while (1);
     
     }   

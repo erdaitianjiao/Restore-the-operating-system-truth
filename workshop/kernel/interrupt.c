@@ -145,7 +145,7 @@ static void exception_init(void) {
 }
 
 // 开中断 并返回开中断前的状态
-enum intr_status intr_eabale() {
+enum intr_status intr_eabale(void) {
 
     enum intr_status old_status;
     if (INTR_ON == intr_get_status()) {
@@ -164,7 +164,7 @@ enum intr_status intr_eabale() {
 }
 
 // 关中断 并返回开中断前的状态
-enum intr_status intr_disable() {
+enum intr_status intr_disable(void) {
 
     enum intr_status old_status;
     if (INTR_ON == intr_get_status()) {
@@ -190,7 +190,7 @@ enum intr_status intr_set_status(enum intr_status status) {
 }
 
 // 获得当前中断状态
-enum intr_status intr_get_status() {
+enum intr_status intr_get_status(void) {
 
     uint32_t eflags = 0;
     GET_EFALGS(eflags);
@@ -201,7 +201,7 @@ enum intr_status intr_get_status() {
 
 
 // 完成有关中断的所有初始化工作
-void idt_init() {
+void idt_init(void) {
 
     put_str("idt_init start\n");
     idt_desc_init();                    // 初始化中断描述符
