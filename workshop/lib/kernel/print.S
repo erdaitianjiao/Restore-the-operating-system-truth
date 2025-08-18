@@ -3,12 +3,12 @@ RPL0   equ 000b
 SELECTOR_VIDEO  equ (0x0003 << 3) + TI_GDT + RPL0
 SELECTOR_DATA   equ (0x0002 << 3) + TI_GDT + RPL0
 
-[bits 32]
 
-section .date
+section .data
 
 put_int_buffer dq 0                       ; 定义8字节缓冲区得到数字到字符的转换
 
+[bits 32]
 section .text
 ; -------------函数名称 put_str---------------
 ; put_str 通过put_char来打印以0字符结尾的字符串
@@ -51,7 +51,7 @@ put_char:
     out dx, al
     mov dx, 0x03d5                  ; 通过读写数据端口0x3d5来获得或设置光标位置 
     in  al, dx                      ; 得到了光标位置的高8位
-    shl ax, 0x8
+    mov ah, al
 
     ; 再获取低8位
     mov dx, 0x03d4
@@ -64,7 +64,7 @@ put_char:
     mov bx, ax
     
     ; 下面这行是在栈中获取待打印的字符
-    mov byte cl, [esp + 36]
+    mov ecx, [esp + 36]
                                     ; pushad压入4×8＝32字节,加上主调函数的返回地址4字节,故esp+36字节
                                     ; cr = 0x0d, lf = 0x0a
     cmp cl, 0xd
@@ -80,8 +80,7 @@ put_char:
 
     ; 处理backspace
 .is_backspace:
-    cmp bx, 0
-    je .set_cursor
+
     dec bx                  
     shl bx, 1                       ; bx * 2
 
@@ -134,11 +133,10 @@ put_char:
     ; 将最后一行填充为空白
     mov ebx, 3840
     mov ecx, 80
-    mov esi, 0
 
 .cls:
-    mov word [ebx + esi * 2], 0x720 ; 0x0720是黑底白字的空格键
-    inc esi
+    mov word [gs: ebx], 0x720 ; 0x0720是黑底白字的空格键
+    add ebx, 2
 
     loop .cls
     mov ebx, 1920                   ; 将光标值重置为1920,最后一行的首字符.

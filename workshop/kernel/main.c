@@ -1,12 +1,15 @@
 #include "init.h"
 #include "print.h"
 #include "interrupt.h"
-#include "../device/timer.h"
+#include "debug.h"
 
 int main() {
 
     put_str("hello kernel!\n");
     init_all();
-    asm volatile("sti");
+    
+    ASSERT(1 == 2);
     while(1);
+    return 0;
+
 }

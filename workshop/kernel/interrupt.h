@@ -15,4 +15,9 @@ enum intr_status {
 
 };
 
+enum intr_status intr_eabale();
+enum intr_status intr_disable();
+enum intr_status intr_set_status(enum intr_status status);
+enum intr_status intr_get_status();
+
 #endif
