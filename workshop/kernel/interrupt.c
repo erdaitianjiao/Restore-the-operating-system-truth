@@ -42,6 +42,8 @@ static void pic_init(void) {
     // 打开主片上的IR0 只接受时钟产生的中断
     outb(PIC_M_DATA, 0xfe);
     outb(PIC_S_DATA, 0xff);
+    
+    put_str("   pic_init done\n");
 
 }
 
@@ -84,7 +86,7 @@ static void idt_desc_init(void) {
 
     }
 
-    put_str("idt_desc_init_done\n");
+    put_str("   idt_desc_init_done\n");
 
 }
 

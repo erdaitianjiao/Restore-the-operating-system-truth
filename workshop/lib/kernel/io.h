@@ -9,8 +9,8 @@
 
 */
 
-#ifndef _LIB_IO_H
-#define _LIB_IO_H
+#ifndef __LIB_IO_H
+#define __LIB_IO_H
 
 #include "stdint.h"
 

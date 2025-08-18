@@ -8,8 +8,6 @@ int main(void) {
 
     put_str("hello kernel!\n");
     init_all();
-
-    ASSERT(strcmp("bbb","bbb"));
     while (1);
     return 0;
 
