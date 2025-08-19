@@ -30,7 +30,7 @@ static inline void outsw(uint16_t port, const void *addr, uint32_t word_cnt) {
     // outsw是把ds:esi处的16位的内容写入port端口 我们在设置段描述符的时候
     // 已经将 ds es cs 段的选择子赋相同值了 不用担心数据错乱
 
-    asm volatile ("cld; rep outsw" : "+S" (addr), "+c" (word_cnt) : "d" (port));
+    asm volatile ("cld\n\t" "rep outsw" : "+S" (addr), "+c" (word_cnt) : "d" (port));
 }
 
 // 从port端口读一个字节返回
@@ -46,7 +46,7 @@ static inline void insw(uint16_t port, void* addr, uint32_t word_cnt) {
 
     // insw是从port读取16位内容写入es:edi只想的内存
 
-    asm volatile ("cld; rep insw" : "+D" (addr), "+c" (word_cnt) : "d" (port) : "memory");
+    asm volatile ("cld\n\t" "rep insw" : "+D" (addr), "+c" (word_cnt) : "d" (port) : "memory");
 
 }
 
