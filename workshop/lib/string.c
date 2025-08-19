@@ -24,6 +24,7 @@ void memcpy(void* dst_, const void* src_, uint32_t size) {
     
     uint8_t *dst = dst_;
     const uint8_t* src = src_;
+    
     while (size -- > 0) {
 
         *dst ++ = *src ++;
@@ -47,6 +48,7 @@ int memcmp(const void* a_, const void* b_, uint32_t size) {
             return *a > *b ? 1 : -1;
 
         }
+
         a ++;
         b ++;
 
@@ -148,7 +150,9 @@ char* strcat(char* dst_, const char* src_) {
     char* str = dst_;
 
     while (*str ++);
+
     -- str;
+
     while ((*str ++ = *src_ ++));
 
     return dst_;
