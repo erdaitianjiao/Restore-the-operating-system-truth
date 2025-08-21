@@ -3,7 +3,6 @@
 #include "global.h"
 
 #define BITMAP_MASK 1
-typedef int bool;
 struct bitmap {
 
     uint32_t btmp_bytes_len;

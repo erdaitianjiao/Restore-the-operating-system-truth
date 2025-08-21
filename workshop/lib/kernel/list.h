@@ -3,6 +3,10 @@
 
 #include "global.h"
 
+#define NULL 0
+#define true 1
+#define false 0
+
 #define offset(struct_type, member) (int)(&((struct_type*)0)->member)       // 获得member的偏移地址
 #define elem2entry(struct_type, struct_member_name, elem_ptr) \
                 (struct_type*)((int)elm_ptr - offset(strcut_type, struct_member_name))

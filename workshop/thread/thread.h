@@ -2,6 +2,7 @@
 #define __THREAD_THREAD_H
 
 #include "stdint.h"
+#include "list.h"
 
 // 自定义通用函数类型 将成为很多线程函数中作为形式参数
 typedef void thread_func(void*);
@@ -81,6 +82,19 @@ struct task_struct {
     enum task_status status;
     uint8_t priority;                   // 线程优先级
     char name[16];
+    uint8_t ticks;                      // 每次在处理器上执行的时间滴答数
+    
+    // 此任务自上cpu运行至今占用了多少cpu滴答数 也就是执行了多久
+    uint32_t elapsed_ticks;
+
+    // general_tag的作用是用于在线程在一般队列中的节点
+    struct list_elem general_tag;
+
+    // all_list_tag作用是用于线程队列thread_all_list中的节点
+    struct list_elem all_list_tag;
+
+    uint32_t* pgdir;                    //进程自己页表的虚拟地址
+
     uint32_t stack_magic;               // 栈的边界标记 用于检测栈溢出
 
 };

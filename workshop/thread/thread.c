@@ -6,9 +6,30 @@
 
 #define PG_SIZE 4096
 
+struct task_struct* main_thread;            // 主进程PCB
+struct list thread_ready_list;              // 就绪队列
+struct list thread_all_list;                // 所有任务队列
+static struct list_elem* thread_tag;        // 用于保存队列中的线程节点
+
+extern void switch_to(struct task_struct* cur, struct task_struct* next);
+
+// 获取当前线程pcb指针
+struct task_struct* running_thread() {
+
+    uint32_t esp;
+
+    asm ("mov %%esp, %0" : "=g" (esp));
+
+    // 取esp整数部分 即pcb起始地址
+    return (struct task_struct*)(esp & 0xfffff000);
+
+}
+
 // 由kernel_thread去执行function(func_arg)
 static void kernel_thread(thread_func* function, void* func_arg) {
 
+    // 执行function前要开中断 避免后面的时钟中断被屏蔽 而无法调度其他线程
+    intr_enable();
     function(func_arg);
 
 }
@@ -39,11 +60,24 @@ void init_thread(struct task_struct* pthread, char* name, int prio) {
     memset(pthread, 0, sizeof(*pthread));
     
     strcpy(pthread->name, name);
-    pthread->status = TASK_RUNNING;
-    pthread->priority = prio;
+
+    if (pthread == main_thread) {
+
+        // 由于把main函数也封装一个线程 所以直接设为TASK_RUNNING
+        pthread->status = TASK_RUNNING;
+
+    } else {
+
+        pthread->status = TASK_READY;
+
+    }
 
     // self_kstack是线程自己在内核态的时候使用的栈顶地址
-    pthread->self_kstack = (uint32_t*)((uint32_t)pthread + PG_SIZE);        // 刚开始的位置是最低位置 栈顶位置+一页
+    pthread->self_kstack = (uint32_t*)((uint32_t)pthread + PG_SIZE);        // 刚开始的位置是最低位置 栈顶位置 + 一页
+    pthread->priority = prio;
+    pthread->ticks = prio;
+    pthread->elapsed_ticks = 0;
+    pthread->pgdir = NULL;
     // pthread->stack_magic = 0x19870916;                                   
     pthread->stack_magic = 0x23333333;                                      // 自定义的魔数
 
