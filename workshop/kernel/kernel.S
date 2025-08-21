@@ -23,7 +23,7 @@ intr%1entry:                            ; 得到每个中断的向量号
     push es
     push fs
     push gs
-    pushad                              ; pushad指令压入32位寄存器 入栈顺序为 eax ecx edx ebx esp ebp esi esi
+    pushad                              ; pushad指令压入32位寄存器 入栈顺序为 eax ecx edx ebx esp ebp esi edi
 
     
     ; 如果是从片上进入中断 得向从片和主片分别发送EOI

@@ -2,6 +2,7 @@
 #include "stdint.h"
 #include "global.h"
 #include "io.h"
+#include "print.h"
 
 #define PIC_M_CTRL      0x20            // 主片控制端口0x20
 #define PIC_M_DATA      0x21            // 主片数据端口0x21
@@ -97,12 +98,40 @@ static void general_intr_handler(uint8_t vec_nr) {
     // 0x2f是从片8259A最后一个IQR引脚 需保留
     if (vec_nr == 0x27 || vec_nr == 0x2f) {
 
+        // IRQ7和IRQ15会产生伪中断 spurious interrupt 无需处理
         return;
 
     }
-    put_str("init vector : 0x");
-    put_int(vec_nr);
-    put_char('\n');
+
+    // 将光标设为0 从屏幕左上角清出一片打印异常信息的区域 方便阅读
+    set_cursor(0);
+    int cursor_pos = 0;
+    
+    while (cursor_pos < 320) {
+
+        put_char(' ');
+        cursor_pos ++;
+
+    }
+    set_cursor(0);                                          // 重置光标为屏幕左上角
+    put_str("------- excetion message begin --------\n");
+    set_cursor(84);                                         // 从第2行第8个字符开始打印
+    put_str(intr_name[vec_nr]);                             
+
+    if (vec_nr == 14) {
+
+        // 如果是Pagefault 将缺失的地址打出来悬停
+        int page_fault_vaddr = 0;
+        asm ("movl %%cr2, %0" : "=r"  (page_fault_vaddr));
+
+        put_str("\npage fault addr is"); put_int(page_fault_vaddr);
+    }
+    
+    put_str("\n------- excetion message end --------\n");
+
+    // 能进入中断处理程序就表示已经处在关中断情况下     
+    // 不会出现调度进程的情况 下面的死循环不会再被中断      
+    while(1);
 
 }
 
@@ -147,7 +176,7 @@ static void exception_init(void) {
 }
 
 // 开中断 并返回开中断前的状态
-enum intr_status intr_eabale(void) {
+enum intr_status intr_enable(void) {
 
     enum intr_status old_status;
     if (INTR_ON == intr_get_status()) {
@@ -187,7 +216,7 @@ enum intr_status intr_disable(void) {
 // 将中断状态设置为status
 enum intr_status intr_set_status(enum intr_status status) {
 
-    return status & INTR_ON ? intr_eabale() : intr_disable();
+    return status & INTR_ON ? intr_enable() : intr_disable();
 
 }
 
@@ -201,6 +230,14 @@ enum intr_status intr_get_status(void) {
 
 }
 
+// 在中断处理程序数组第vertor_no个元素中注册安装中断处理程序function
+void register_handler(uint8_t vector_no, intr_handler function) {
+
+    // idt_table数组的函数是在进入中断后根据向量号调用的
+    // 在kernel/kernel.S的call [idt_table + %1 * 4]
+    idt_table[vector_no] = function;
+
+}
 
 // 完成有关中断的所有初始化工作
 void idt_init(void) {

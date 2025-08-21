@@ -10,12 +10,12 @@ typedef void thread_func(void*);
 // 进程或线程状态
 enum task_status {
 
-    TASK_RUNNING,
-    TASK_READY,
-    TASK_BLOCKED,
-    TASK_WAITING,
-    TASK_HANGING,
-    TASK_DIED
+    TASK_RUNNING,       // 0
+    TASK_READY,         // 1
+    TASK_BLOCKED,       // 2
+    TASK_WAITING,       // 3
+    TASK_HANGING,       // 4
+    TASK_DIED           // 5
 
 };
 
@@ -103,5 +103,9 @@ static void kernel_thread(thread_func* function,void* func_arg);
 void thread_create(struct task_struct* pthread,thread_func function,void* func_arg);
 void init_thread(struct task_struct* pthread,char* name,int prio);
 struct task_struct* thread_start(char* name,int prio,thread_func function,void* func_arg);
+static void make_main_thread(void);
+struct task_struct* running_thread(void);
+void schedule(void);
+void thread_init(void);
 
 #endif

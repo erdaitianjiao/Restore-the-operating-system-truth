@@ -3,6 +3,9 @@
 #include "string.h"
 #include "global.h"
 #include "memory.h"
+#include "debug.h"
+#include "interrupt.h"
+#include "print.h"
 
 #define PG_SIZE 4096
 
@@ -14,7 +17,7 @@ static struct list_elem* thread_tag;        // 用于保存队列中的线程节
 extern void switch_to(struct task_struct* cur, struct task_struct* next);
 
 // 获取当前线程pcb指针
-struct task_struct* running_thread() {
+struct task_struct* running_thread(void) {
 
     uint32_t esp;
 
@@ -79,7 +82,7 @@ void init_thread(struct task_struct* pthread, char* name, int prio) {
     pthread->elapsed_ticks = 0;
     pthread->pgdir = NULL;
     // pthread->stack_magic = 0x19870916;                                   
-    pthread->stack_magic = 0x23333333;                                      // 自定义的魔数
+    pthread->stack_magic = 0x20050102;                                      // 自定义的魔数
 
 }
 
@@ -92,13 +95,79 @@ struct task_struct* thread_start(char* name, int prio, thread_func function, voi
     init_thread(thread, name, prio);
     thread_create(thread, function, func_arg);
 
-    asm volatile ("movl %0, %%esp\n\t"
-                  "pop %%ebp\n\t"
-                  "pop %%ebx\n\t"
-                  "pop %%edi\n\t"
-                  "pop %%esi\n\t"
-                  "ret"
-                  : : "g" (thread->self_kstack)
-                  : "memory");
+    // 确保之前不在队列中
+    ASSERT(!(elem_find(&thread_ready_list, &thread->general_tag)));
+    // 加入就绪线程队列
+    list_append(&thread_ready_list, &thread->general_tag);
+
+    // 确保之前不在队列中 
+    ASSERT(!elem_find(&thread_all_list, &thread->all_list_tag));
+    // 加入全部线程队列
+    list_append(&thread_all_list, &thread->all_list_tag);
+                  
     return thread;
+}
+
+// 将kernel中的main函数完善成主进程
+static void make_main_thread(void) {
+
+    // 因为main线程早已在运行
+    // 就在loader.S中进入内核时mov esp, 0xc009f000
+    // 就是为其预留pcb的 因此pcb的地址是0xc009e000
+    // 不需要通过get_kernel_page另分配一页
+    main_thread = running_thread();
+    init_thread(main_thread, "main", 31);
+
+    // main函数是当前进程 当前线程不在thread_ready_list中
+    // 所以只能将其加入thread_all_list中
+    ASSERT(!(elem_find(&thread_all_list, &main_thread->all_list_tag)));
+    list_append(&thread_all_list, &main_thread->all_list_tag);
+
+}
+
+// 实现任务调度
+void schedule(void) {
+
+    ASSERT(intr_get_status() == INTR_OFF);
+
+    struct task_struct* cur = running_thread();
+    if (cur->status == TASK_RUNNING) {
+
+        // 若此线程只是cpu时间片到了 将其加入到就绪队列队尾
+        ASSERT(!elem_find(&thread_ready_list, &cur->general_tag));
+        list_append(&thread_ready_list, &cur->general_tag);
+
+        // 重新将线程中的ticks重置为其priority
+        cur->ticks = cur->priority;
+        cur->status = TASK_READY;
+
+    } else {
+
+        // 若此线程需要某件时间发生后才能继续到cpu中运行 不需要加入队列 因为不在就绪队列中
+
+    }
+
+    ASSERT(!list_empty(&thread_ready_list));
+    thread_tag = NULL;                          // thread_tag 清空
+
+    // 将thread_ready_list中的第一个就绪线程弹出 准备将其调度上cpu
+    thread_tag = list_pop(&thread_ready_list);
+    struct task_struct* next = elem2entry(struct task_struct, general_tag, thread_tag);
+    next->status = TASK_RUNNING;
+
+    switch_to(cur, next);
+
+}
+
+// 初始化线程环境
+void thread_init(void) {
+
+    put_str("thread_init start\n");
+    list_init(&thread_ready_list);
+    list_init(&thread_all_list);
+    
+    // 将当前main函数创建为线程
+    make_main_thread();
+    put_str("thread_init done\n");
+
 }
