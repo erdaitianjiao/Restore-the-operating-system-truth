@@ -2,6 +2,14 @@
     "files.associations": {
         "*.S": "assembly",
         "*.c": "c",
-        "stdint.h": "c"
+        "stdint.h": "c",
+        "global.h": "c",
+        "stdint-gcc.h": "c",
+        "string.h": "c",
+        "print.h": "c",
+        "debug.h": "c",
+        "memory.h": "c",
+        "interrupt.h": "c",
+        "thread.h": "c"
     }
 }

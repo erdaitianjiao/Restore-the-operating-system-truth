@@ -5,7 +5,9 @@
             "includePath": [
                 "${workspaceFolder}**",
                 "./workshop/lib/kernel/",
-                "./workshop/kernel/"
+                "./workshop/kernel/",
+                "./workshop/thread/",
+                "./workshop/device/"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
