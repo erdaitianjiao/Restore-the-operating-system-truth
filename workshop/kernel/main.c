@@ -2,6 +2,7 @@
 #include "print.h"
 #include "thread.h"
 #include "interrupt.h"
+#include "console.h"
 
 void k_thread_a(void*);
 void k_thread_b(void*);
@@ -18,7 +19,7 @@ int main(void) {
 
     while (1) {
 
-        put_str("main ");
+        console_put_str("Main "); 
 
     }
 
@@ -34,8 +35,7 @@ void k_thread_a(void* arg) {
 
     while (1) {
 
-        put_str(para);
-
+        console_put_str(para);
     }
 }
 
@@ -47,7 +47,7 @@ void k_thread_b(void* arg) {
 
     while (1) {
 
-        put_str(para);
+        console_put_str(para);     
 
     }
 }

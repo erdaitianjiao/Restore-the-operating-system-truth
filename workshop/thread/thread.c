@@ -159,6 +159,49 @@ void schedule(void) {
 
 }
 
+// 当前线程将自己阻塞 标志状态为stat
+void thread_block(enum task_status stat) {
+
+    // stat取值为TASK_BLOCKED TASK_WAITTING  TASK_HANGING这几个状态表示不会被调度
+    ASSERT(((stat == TASK_BLOCKED) || (stat == TASK_WAITING) || (stat == TASK_HANGING)));
+
+    enum intr_status old_status = intr_disable();
+
+    struct task_struct* cur_thread = running_thread();
+    
+    cur_thread->status = stat;                                  // 置状态为stat
+
+    schedule();                                                 // 将当前进程换下处理器
+
+    // 等待当前进程被解除阻塞时才能继续运行下面的intr_set_status
+    intr_set_status(old_status);
+
+}
+
+// 将线程解除阻塞
+void thread_unblock(struct task_struct* pthread) {
+    
+    enum intr_status old_status = intr_disable();
+    ASSERT(((pthread->status == TASK_BLOCKED) || (pthread->status == TASK_WAITING) || (pthread->status == TASK_HANGING)));
+
+    if (pthread->status != TASK_READY) {
+
+        ASSERT(!elem_find(&thread_ready_list, &pthread->general_tag));
+        if (elem_find(&thread_ready_list, &pthread->general_tag)) {
+
+            PANIC("thread_unblock: block thread is in ready_list\n");
+
+        }
+
+        list_push(&thread_ready_list, &pthread->general_tag);               // 放到队列最前头 使其尽快得到调度
+        pthread->status = TASK_READY;
+
+    }
+
+    intr_set_status(old_status);
+
+}
+
 // 初始化线程环境
 void thread_init(void) {
 
