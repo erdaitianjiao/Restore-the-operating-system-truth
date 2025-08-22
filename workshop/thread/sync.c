@@ -66,7 +66,6 @@ void sema_up(struct semaphore* psema) {
         struct task_struct* thread_blocked = elem2entry(struct task_struct, general_tag, list_pop(&psema->waiters));
         thread_unblock(thread_blocked);
 
-
     }
 
     psema->value ++;

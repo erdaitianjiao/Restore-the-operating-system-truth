@@ -2,6 +2,8 @@
 #define __LIB_STDINT_H
 
 #define NULL 0
+#define true 1
+#define false 0
 
 typedef signed char int8_t;
 typedef signed short int int16_t;

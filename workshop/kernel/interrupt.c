@@ -9,7 +9,7 @@
 #define PIC_S_CTRL      0xa0            // 从片数据端口0xa0
 #define PIC_S_DATA      0xa1            // 从片数据端口0xa1
 
-#define IDT_DESC_CNT    0x21
+#define IDT_DESC_CNT    0x30            // 目前支持的总中断数
 
 #define EFLAGS_IF       0x00000200      // eflags寄存器中的if位为1
 #define GET_EFALGS(EFLAG_VAR) asm volatile ("pushfl\n\t" "popl %0" : "=g" (EFLAG_VAR))
@@ -44,6 +44,10 @@ static void pic_init(void) {
     outb(PIC_M_DATA, 0xfe);
     outb(PIC_S_DATA, 0xff);
     
+    // 测试键盘 只打开键盘中断 其他全部关闭
+    outb(PIC_M_DATA, 0xfc);
+    outb(PIC_S_DATA, 0xff);
+
     put_str("   pic_init done\n");
 
 }
