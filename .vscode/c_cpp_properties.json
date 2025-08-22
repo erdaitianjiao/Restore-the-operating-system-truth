@@ -7,7 +7,8 @@
                 "./workshop/lib/kernel/",
                 "./workshop/kernel/",
                 "./workshop/thread/",
-                "./workshop/device/"
+                "./workshop/device/",
+                "./workshop/lib"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
