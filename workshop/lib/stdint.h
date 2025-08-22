@@ -1,6 +1,8 @@
 #ifndef __LIB_STDINT_H
 #define __LIB_STDINT_H
 
+typedef int bool;
+
 #define NULL 0
 #define true 1
 #define false 0
