@@ -29,5 +29,4 @@ void sema_up(struct semaphore* psema);
 void lock_acquire(struct lock* plock);
 void lock_release(struct lock* plock);
 
-
 #endif 
