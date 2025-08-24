@@ -13,6 +13,15 @@
 #define TI_GDT 0
 #define TI_LDT 1
 
+// 定义eflags属性
+#define EFLAGS_MBS	          (1 << 1)                      
+#define EFLAGS_IF_1	          (1 << 9)                      // if为1 开中断
+#define EFLAGS_IF_0	          0                             // if为0 关中断
+#define EFLAGS_IOPL_3	     (3 << 12)                     // IOPL3 用于测试用户进程再非系统调用进行IO
+#define EFLAGS_IOPL_0	     (0 << 12)                     // IOPL0
+
+#define DIV_ROUND_UP(X, STEP)  ((X + STEP - 1) / STEP)
+
 // GDT描述符属性
 #define DESC_G_4K	1
 #define DESC_D_32	1
@@ -24,19 +33,19 @@
 #define DESC_DPL_2	2
 #define DESC_DPL_3	3
 
-#define DESC_S_CODE	1
-#define DESC_S_DATA	DESC_S_CODE
-#define DESC_S_SYS	0
+#define DESC_S_CODE	     1
+#define DESC_S_DATA	     DESC_S_CODE
+#define DESC_S_SYS	     0
 #define DESC_TYPE_CODE	8
 
-#define DESC_TYPE_DATA 2
-#define DESC_TYPE_TSS  9
+#define DESC_TYPE_DATA   2
+#define DESC_TYPE_TSS    9
 
 // KERNEL段
-#define SELECTOR_K_CODE     ((1 << 3) + (TI_GDT << 2) + RPL0)
-#define SELECTOR_K_DATA     ((2 << 3) + (TI_GDT << 2) + RPL0)
-#define SELECTOR_K_STACK    SELECTOR_K_DATA
-#define SELECTOR_K_GS       ((3 << 3) + (TI_GDT << 2) + RPL0)
+#define SELECTOR_K_CODE       ((1 << 3) + (TI_GDT << 2) + RPL0)
+#define SELECTOR_K_DATA       ((2 << 3) + (TI_GDT << 2) + RPL0)
+#define SELECTOR_K_STACK      SELECTOR_K_DATA
+#define SELECTOR_K_GS         ((3 << 3) + (TI_GDT << 2) + RPL0)
 
 
 // TSS

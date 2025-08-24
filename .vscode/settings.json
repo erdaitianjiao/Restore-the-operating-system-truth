@@ -10,6 +10,9 @@
         "debug.h": "c",
         "memory.h": "c",
         "interrupt.h": "c",
-        "thread.h": "c"
+        "thread.h": "c",
+        "keyboard.h": "c",
+        "tss.h": "c",
+        "sync.h": "c"
     }
 }

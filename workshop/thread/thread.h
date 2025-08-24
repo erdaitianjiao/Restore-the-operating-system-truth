@@ -5,6 +5,8 @@
 #include "list.h"
 #include "memory.h"
 
+extern struct list thread_ready_list,thread_all_list;
+
 // 自定义通用函数类型 将成为很多线程函数中作为形式参数
 typedef void thread_func(void*);
 
