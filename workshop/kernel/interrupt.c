@@ -14,14 +14,30 @@
 #define EFLAGS_IF       0x00000200      // eflags寄存器中的if位为1
 #define GET_EFALGS(EFLAG_VAR) asm volatile ("pushfl\n\t" "popl %0" : "=g" (EFLAG_VAR))
 
+
+// 中断描述结构体
+struct gate_desc {
+
+    uint16_t func_offset_low_word;
+    uint16_t selector;
+    uint8_t   dcount;                   // 双字计数字段 门描述的第四字节
+
+    uint8_t attribute;
+    uint16_t func_offset_high_word;
+
+};
+
+static void make_idt_desc(struct gate_desc* p_gdesc, uint8_t attr, intr_handler function);
+static struct gate_desc idt[IDT_DESC_CNT];                                      // 中断描述表 其实就是中断门描述数组
+
 char* intr_name[IDT_DESC_CNT];                          // 用于保存异常的名字
 
 // 定义中断处理程序数组 在kernel.S中定义的intrXXentry
 // 只要是中断程序入口 最终调用的是ide_table中的处理程序
 intr_handler idt_table[IDT_DESC_CNT];
+extern intr_handler intr_entry_table[IDT_DESC_CNT];                             // 申明引用在kernel.s中的中断处理函数入口数组
 
 // 声明引用定义在kernel.S文件里面的函数入口数组                   
-extern intr_handler intr_entry_table[IDT_DESC_CNT];
 
 
 static void pic_init(void) {
@@ -51,23 +67,6 @@ static void pic_init(void) {
     put_str("   pic_init done\n");
 
 }
-
-// 中断描述结构体
-struct gate_desc {
-
-    uint16_t func_offset_low_word;
-    uint16_t selector;
-    uint8_t   dcount;                   // 双字计数字段 门描述的第四字节
-
-    uint8_t attribute;
-    uint16_t func_offset_high_word;
-
-};
-
-static void make_idt_desc(struct gate_desc* p_gdesc, uint8_t attr, intr_handler function);
-static struct gate_desc idt[IDT_DESC_CNT];                                      // 中断描述表 其实就是中断门描述数组
-
-extern intr_handler intr_entry_table[IDT_DESC_CNT];                             // 申明引用在kernel.s中的中断处理函数入口数组
 
 
 // 创建中断门描述符
@@ -252,7 +251,9 @@ void idt_init(void) {
     pic_init();                         // 初始化8259A
 
     // 加载idt
-    uint64_t idt_operand = ((sizeof(idt) - 1) | ((uint64_t)((uint32_t)idt << 16)));
+    
+    // debug
+    uint64_t idt_operand = ((sizeof(idt) - 1) | ((uint64_t)(uint32_t)idt << 16));
     asm volatile("lidt %0" : : "m" (idt_operand));
     put_str("idt_init done\n");
 

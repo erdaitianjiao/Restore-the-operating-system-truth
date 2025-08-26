@@ -1,15 +1,16 @@
 ;------loader 和 kernel-------;
  
 LOADER_BASE_ADDR        equ 0x900
+LOADER_STACK_TOP equ LOADER_BASE_ADDR
 LOADER_START_SECTOR     equ 0x2
 
 PAGE_DIR_TABLE_POS      equ 0x100000
 
 ;------------kernel-----------------;
-KERNEL_START_SECTION    equ 0x9
+KERNEL_START_SECTOR     equ 0x9
 KERNEL_BIN_BASE_ADDR    equ 0x70000
 PT_NULL                 equ 0x0
-KERNEL_ENTER_POINT    equ  0xc0001500
+KERNEL_ENTRY_POINT      equ  0xc0001500
 
 ;-----gdt describe parameter------;
 

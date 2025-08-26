@@ -6,6 +6,7 @@
 #include "console.h"
 #include "string.h"
 #include "interrupt.h"
+#include "console.h"
 
 extern void intr_exit(void);
 
@@ -18,7 +19,10 @@ void start_process(void* filename_) {
 
     struct intr_stack* proc_stack = (struct intr_stack*)cur->self_kstack;
     
-    proc_stack->edi = proc_stack->esp_dummy = \
+    proc_stack->edi = proc_stack->esi = \
+    proc_stack->ebp = proc_stack->esp_dummy = 0;
+
+    proc_stack->ebx = proc_stack->edx = \
     proc_stack->ecx = proc_stack->eax = 0;
 
     proc_stack->gs = 0;                            // 用户态用不上 直接初始化为0
@@ -28,7 +32,6 @@ void start_process(void* filename_) {
     proc_stack->eip = function;                     // 待执行的用户程序地址
     proc_stack->cs = SELECTOR_U_CODE;
     proc_stack->eflages = (EFLAGS_IOPL_0 | EFLAGS_MBS | EFLAGS_IF_1);
-
     proc_stack->esp = (void*)((uint32_t)get_a_page(PF_USER, USER_STACK3_VADDR) + PG_SIZE);
     proc_stack->ss = SELECTOR_U_DATA;
     asm volatile ("movl %0, %%esp\n\t" "jmp intr_exit" : : "g" (proc_stack) : "memory");                     
@@ -99,7 +102,7 @@ uint32_t* create_page_dir(void) {
     page_dir_vaddr[1023] = new_page_dir_phy_addr | PG_US_U | PG_RW_W | PG_P_1;
 
     return page_dir_vaddr;
- 
+
 }
 
 // 创建用户进程虚拟地址位图
@@ -134,7 +137,7 @@ void process_execute(void* filename, char* name) {
 
     ASSERT(!elem_find(&thread_all_list, &thread->all_list_tag));
     list_append(&thread_all_list, &thread->all_list_tag);
-    
+
     intr_set_status(old_status);
 
 }

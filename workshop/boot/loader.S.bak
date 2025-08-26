@@ -142,7 +142,8 @@ loader_start:
     mov cr0, eax
     
     jmp dword SELECTOR_CODE: p_mode_start       ;reflash stream
-        
+.error_hlt:		      ;出错则挂起
+    hlt
 [bits 32]
 p_mode_start:
     mov ax, SELECTOR_DATA

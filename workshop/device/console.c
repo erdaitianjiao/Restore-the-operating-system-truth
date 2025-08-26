@@ -48,7 +48,7 @@ void console_put_char(uint8_t char_asci) {
 void console_put_int(uint32_t num) {
 
     console_acquire();
-    put_char(num);
+    put_int(num);
     console_release();
 
 }

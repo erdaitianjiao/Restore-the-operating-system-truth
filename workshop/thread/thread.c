@@ -91,7 +91,7 @@ void init_thread(struct task_struct* pthread, char* name, int prio) {
 struct task_struct* thread_start(char* name, int prio, thread_func function, void* func_arg) {
 
     // pcb都位于内核空间 包括用户进程pcb也是在内核空间
-    struct task_struct *thread = get_kernel_pages(1);
+    struct task_struct* thread = get_kernel_pages(1);
     
     init_thread(thread, name, prio);
     thread_create(thread, function, func_arg);

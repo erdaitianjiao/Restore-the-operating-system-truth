@@ -18,7 +18,7 @@
 
 // 0xc0000000 是内核从虚拟地址3G起
 // 0x100000意指跨过低端1MB内存 使虚拟地址在逻辑上连续
-#define K_HEAP_START 0xc0100000
+#define K_HEAP_START    0xc0100000
 
 #define PDE_IDX(addr) ((addr & 0xffc00000) >> 22)
 #define PTE_IDX(addr) ((addr & 0x003ff000) >> 12)
@@ -246,6 +246,7 @@ void* get_user_pages(uint32_t pg_cnt) {
     lock_acquire(&user_pool.lock);
     
     void* vaddr = malloc_page(PF_USER, pg_cnt);
+
     memset(vaddr, 0, pg_cnt * PG_SIZE);
 
     lock_release(&user_pool.lock);
@@ -257,7 +258,7 @@ void* get_user_pages(uint32_t pg_cnt) {
 // 将地址vaddr与pf池中的物理地址关联 仅支持一页空间分配
 void* get_a_page(enum pool_flags pf, uint32_t vaddr) {
 
-    struct pool* mem_pool = pf & PF_USER ? &kernel_pool : &user_pool;
+    struct pool* mem_pool = pf & PF_KERNEL ? &kernel_pool : &user_pool;
     lock_acquire(&mem_pool->lock);
 
     // 先将虚拟地址对应的位图置1
