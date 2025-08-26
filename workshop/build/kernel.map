@@ -7,10 +7,10 @@ thread_ready_list   0x10              build/thread.o
 tss                 0x6c              build/tss.o
 thread_all_list     0x10              build/thread.o
 user_pool           0x2c              build/memory.o
-kernel_vddr         0xc               build/memory.o
 intr_name           0xc0              build/interrupt.o
 main_thread         0x4               build/thread.o
 ticks               0x4               build/timer.o
+kernel_vaddr        0xc               build/memory.o
 idt_table           0xc0              build/interrupt.o
 kernel_pool         0x2c              build/memory.o
 
@@ -467,7 +467,7 @@ LOAD build/process.o
  *fill*         0x00000000c00084c4       0x1c 
  COMMON         0x00000000c00084e0       0x6c build/memory.o
                 0x00000000c00084e0                user_pool
-                0x00000000c000850c                kernel_vddr
+                0x00000000c000850c                kernel_vaddr
                 0x00000000c0008520                kernel_pool
  COMMON         0x00000000c000854c       0x24 build/thread.o
                 0x00000000c000854c                thread_ready_list

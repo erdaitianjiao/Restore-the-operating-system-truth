@@ -24,7 +24,7 @@ enum pool_flags {
 struct virtual_addr {
 
     struct bitmap vaddr_bitmap;         // 虚拟地址用到的位图结构
-    uint32_t vaddr_satrt;               // 虚拟地址的起始位置
+    uint32_t vaddr_start;               // 虚拟地址的起始位置
 
 };
 

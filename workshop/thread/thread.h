@@ -47,7 +47,7 @@ struct intr_stack {
     uint32_t err_code;
     void (*eip)(void);
     uint32_t cs;
-    uint32_t eflages;
+    uint32_t eflags;
     void* esp;
     uint32_t ss;
 

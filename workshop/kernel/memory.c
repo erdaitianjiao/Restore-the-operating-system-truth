@@ -35,7 +35,7 @@ struct pool {
 };
 
 struct pool kernel_pool, user_pool;             // 生成内核用户池和用户内核池
-struct virtual_addr kernel_vddr;                // 用于给内核分配虚拟地址
+struct virtual_addr kernel_vaddr;                // 用于给内核分配虚拟地址
 
 // 在pf表示的虚拟内存池中申请pg_cnt个虚拟页
 static void* vaddr_get(enum pool_flags pf, uint32_t pg_cnt) {
@@ -46,7 +46,7 @@ static void* vaddr_get(enum pool_flags pf, uint32_t pg_cnt) {
     // 如果是内核进程池
     if (pf == PF_KERNEL) {
 
-        bit_idx_start = bitmap_scan(&kernel_vddr.vaddr_bitmap, pg_cnt);
+        bit_idx_start = bitmap_scan(&kernel_vaddr.vaddr_bitmap, pg_cnt);
         if (bit_idx_start == -1) {
 
             return NULL;
@@ -55,11 +55,11 @@ static void* vaddr_get(enum pool_flags pf, uint32_t pg_cnt) {
 
         while (cnt < pg_cnt) {
 
-            bitmap_set(&kernel_vddr.vaddr_bitmap, bit_idx_start + cnt ++ , 1);
+            bitmap_set(&kernel_vaddr.vaddr_bitmap, bit_idx_start + cnt ++ , 1);
 
         }
 
-        vaddr_start = kernel_vddr.vaddr_satrt + bit_idx_start * PG_SIZE;
+        vaddr_start = kernel_vaddr.vaddr_start + bit_idx_start * PG_SIZE;
 
     } else {
 
@@ -79,7 +79,7 @@ static void* vaddr_get(enum pool_flags pf, uint32_t pg_cnt) {
 
         }
 
-        vaddr_start = cur->userprog_vaddr.vaddr_satrt + bit_idx_start * PG_SIZE;
+        vaddr_start = cur->userprog_vaddr.vaddr_start + bit_idx_start * PG_SIZE;
 
         // (0xc0000000 - PG_SIZE)作为用户3级栈已经在start_process被分配
         ASSERT((uint32_t)vaddr_start < (0xc0000000 - PG_SIZE)); 
@@ -268,16 +268,16 @@ void* get_a_page(enum pool_flags pf, uint32_t vaddr) {
     // 如果当前是用户进程申请用户内存 就修改用户进程自己的地址位图
     if (cur->pgdir != NULL && pf == PF_USER) {
 
-        bit_idx = (vaddr - cur->userprog_vaddr.vaddr_satrt) / PG_SIZE;
+        bit_idx = (vaddr - cur->userprog_vaddr.vaddr_start) / PG_SIZE;
         ASSERT(bit_idx > 0);
         bitmap_set(&cur->userprog_vaddr.vaddr_bitmap, bit_idx, 1);
 
     } else if (cur->pgdir == NULL && pf == PF_KERNEL) {
         // 如果是内核进程申请内核内存 就修改kernel_vaddr
 
-        bit_idx = (vaddr - kernel_vddr.vaddr_satrt) / PG_SIZE;
+        bit_idx = (vaddr - kernel_vaddr.vaddr_start) / PG_SIZE;
         ASSERT(bit_idx > 0);
-        bitmap_set(&kernel_vddr.vaddr_bitmap, bit_idx, 1);
+        bitmap_set(&kernel_vaddr.vaddr_bitmap, bit_idx, 1);
 
     } else {
 
@@ -378,14 +378,14 @@ static void mem_pool_init(uint32_t all_mem) {
 
     // 下面初始化内核虚拟地址的位图 按实际物理内存大小生成数组
 
-    kernel_vddr.vaddr_bitmap.btmp_bytes_len = kbm_length;
+    kernel_vaddr.vaddr_bitmap.btmp_bytes_len = kbm_length;
     // 用于维护内核堆的续集地址 所以要和内核内存池大小一致
 
     // 位置的数组指向另一块未使用的内存 目前定位在内核内存池和用户内存池之外
-    kernel_vddr.vaddr_bitmap.bits = (void*)(MEM_BITMAP_BASE + kbm_length + ubm_length);
-    kernel_vddr.vaddr_satrt = K_HEAP_START;
+    kernel_vaddr.vaddr_bitmap.bits = (void*)(MEM_BITMAP_BASE + kbm_length + ubm_length);
+    kernel_vaddr.vaddr_start = K_HEAP_START;
     
-    bitmap_init(&kernel_vddr.vaddr_bitmap);
+    bitmap_init(&kernel_vaddr.vaddr_bitmap);
 
     lock_init(&kernel_pool.lock);
     lock_init(&user_pool.lock);
