@@ -135,7 +135,7 @@ static void make_main_thread(void) {
 
     // main函数是当前进程 当前线程不在thread_ready_list中
     // 所以只能将其加入thread_all_list中
-    ASSERT(!(elem_find(&thread_all_list, &main_thread->all_list_tag)));
+    ASSERT(!elem_find(&thread_all_list, &main_thread->all_list_tag));
     list_append(&thread_all_list, &main_thread->all_list_tag);
 
 }

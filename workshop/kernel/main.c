@@ -16,19 +16,23 @@ int prog_a_pid = 0, prog_b_pid = 0;
 
 int main(void) {
 
-    put_str("hello kernel!\n");
+    put_str("I am kernel\n");
     init_all();
 
     process_execute(u_prog_a, "user_prog_a");
     process_execute(u_prog_b, "user_prog_b");
-    thread_start("k_thread_a", 31, k_thread_a, "Arga "); 
-    thread_start("k_thread_b", 31, k_thread_b, "Argb ");
 
     intr_enable();                                          // 打开中断 使时钟中断起作用
 
-    while (1) {
+    console_put_str(" main_pid:0x");
+    console_put_int(sys_getpid());
+    console_put_char('\n');
+    thread_start("k_thread_a", 31, k_thread_a, "argA ");
+    thread_start("k_thread_b", 31, k_thread_b, "argB ");
 
-    }
+    
+
+    while (1);
 
     return 0;
 
@@ -39,12 +43,14 @@ void k_thread_a(void* arg) {
 
     char* para = arg;
 
-    while (1) {
+    console_put_str(" thread_a_pid:0x");
+    console_put_int(sys_getpid());
+    console_put_char('\n');
+    console_put_str(" prog_a_pid:0x");
+    console_put_int(prog_a_pid);
+    console_put_char('\n');
+    while(1);
 
-        console_put_str("v_a:0x");
-        console_put_int(test_var_a);
-
-    }
 }
 
 // 在线程中运行的函数
@@ -52,30 +58,26 @@ void k_thread_b(void* arg) {
 
     char* para = arg;
 
-    while (1) {
-    
-        console_put_str("v_b:0x");
-        console_put_int(test_var_b);
+    console_put_str(" thread_b_pid:0x");
+    console_put_int(sys_getpid());
+    console_put_char('\n');
+    console_put_str(" prog_b_pid:0x");
+    console_put_int(prog_b_pid);
+    console_put_char('\n');
+    while(1);
 
-    }
 }
 
 void u_prog_a(void) {
 
-    while (1) {
-
-        test_var_a ++;
-
-    }
+    prog_a_pid = getpid();
+    while(1);
  
 }
 
 void u_prog_b(void) {
 
-    while (1) {
-
-        test_var_b ++;
-
-    }
+    prog_b_pid = getpid();
+    while(1);
  
 }
