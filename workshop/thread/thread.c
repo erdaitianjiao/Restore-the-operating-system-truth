@@ -7,6 +7,7 @@
 #include "interrupt.h"
 #include "print.h"
 #include "process.h"
+#include "sync.h"
 
 #define PG_SIZE 4096
 
@@ -14,6 +15,8 @@ struct task_struct* main_thread;            // 主进程PCB
 struct list thread_ready_list;              // 就绪队列
 struct list thread_all_list;                // 所有任务队列
 static struct list_elem* thread_tag;        // 用于保存队列中的线程节点
+
+struct lock pid_lock;                       // 分配pid锁
 
 extern void switch_to(struct task_struct* cur, struct task_struct* next);
 
@@ -26,6 +29,17 @@ struct task_struct* running_thread(void) {
 
     // 取esp整数部分 即pcb起始地址
     return (struct task_struct*)(esp & 0xfffff000);
+
+}
+
+// 分配pid
+static pid_t allocate_pid(void) {
+
+    static pid_t next_pid = 0;
+    lock_acquire(&pid_lock);
+    next_pid ++;
+    lock_release(&pid_lock);
+    return next_pid;
 
 }
 
@@ -62,7 +76,7 @@ void thread_create(struct task_struct* pthread, thread_func function, void* func
 void init_thread(struct task_struct* pthread, char* name, int prio) {
 
     memset(pthread, 0, sizeof(*pthread));
-    
+    pthread->pid = allocate_pid();
     strcpy(pthread->name, name);
 
     if (pthread == main_thread) {
@@ -212,6 +226,7 @@ void thread_init(void) {
     put_str("thread_init start\n");
     list_init(&thread_ready_list);
     list_init(&thread_all_list);
+    lock_init(&pid_lock);
     
     // 将当前main函数创建为线程
     make_main_thread();

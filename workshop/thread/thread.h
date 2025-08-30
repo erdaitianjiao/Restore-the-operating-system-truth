@@ -10,6 +10,8 @@ extern struct list thread_ready_list,thread_all_list;
 // 自定义通用函数类型 将成为很多线程函数中作为形式参数
 typedef void thread_func(void*);
 
+typedef int16_t pid_t;
+
 // 进程或线程状态
 enum task_status {
 
@@ -82,6 +84,7 @@ struct thread_stack {
 struct task_struct {
 
     uint32_t* self_kstack;              // 各内核线程都用自己的内核栈
+    pid_t pid;
     enum task_status status;
     uint8_t priority;                   // 线程优先级
     char name[16];

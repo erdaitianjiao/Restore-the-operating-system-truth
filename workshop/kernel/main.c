@@ -12,6 +12,7 @@ void k_thread_b(void*);
 void u_prog_a(void);
 void u_prog_b(void);
 int test_var_a = 0, test_var_b = 0;
+int prog_a_pid = 0, prog_b_pid = 0;
 
 int main(void) {
 
@@ -23,7 +24,7 @@ int main(void) {
     thread_start("k_thread_a", 31, k_thread_a, "Arga "); 
     thread_start("k_thread_b", 31, k_thread_b, "Argb ");
 
-    intr_enable();              // 打开中断 使时钟中断起作用
+    intr_enable();                                          // 打开中断 使时钟中断起作用
 
     while (1) {
 
