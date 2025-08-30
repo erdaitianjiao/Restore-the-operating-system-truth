@@ -110,22 +110,29 @@ extern syscall_table
 section .text
 global syscall_handler
 syscall_handler:
+
     ; 1 保存上下文环境
     push 0                  ; 压入0 使中断格式统一
 
     push ds
     push es
-    push fs
+    ; push fs
     push gs
     pushad
     
-    ; 2 为系统调用子功能传入参数
     push 0x80               ; 格式统一
-    push edx                ; 系统调用第3个参数
-    push ecx                ; 系统调用第2个参数
-    push ebx                ; 系统调用第1个参数
 
-    ; 3 调用子功能处理函数
+    ; 2 从内核栈中取出cpu自动压入的用户栈指针esp的值
+    mov ebx, [esp + 4 + 48 + 4 + 12]
+    
+    ; 再把参数重新压在内核栈中 此时ebx是用户栈指针
+    ; 由于此处只压入了三个参数 所以目前系统调用只支持三个参数
+    push dword [ebx + 12]       ; 系统调用第3个参数
+    push dword [ebx + 8]        ; 系统调用第2个参数
+    push dword [ebx + 4]        ; 系统调用第3个参数
+
+
+    ; 3 调用子功能处理函数 编译器会在栈中根据C函数声明匹配正确数量的参数
     call [syscall_table + eax * 4]
     add esp, 12                         ; 跳过上面的三个参数
 

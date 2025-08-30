@@ -9,7 +9,8 @@
                 "./workshop/thread/",
                 "./workshop/device/",
                 "./workshop/lib/",
-                "./workshop/userprog/"
+                "./workshop/userprog/",
+                "./workshop/lib/user/"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
