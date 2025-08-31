@@ -41,6 +41,7 @@ uint32_t vsprintf(char* str, const char* format, va_list ap) {
     const char* index_ptr = format;
     char index_char = *index_ptr;
     int32_t arg_int;
+    char* arg_str;
 
     while (index_char) {
 
@@ -54,12 +55,32 @@ uint32_t vsprintf(char* str, const char* format, va_list ap) {
         index_char = *(++ index_ptr);       // 得到%后面字符
         switch (index_char) {
 
+            case 's':
+                arg_str = va_arg(ap, char*);
+                strcpy(buf_ptr, arg_str);
+                buf_ptr += strlen(arg_str);
+                index_char = *(++ index_ptr);
+                break;
+
             case 'x':
                 arg_int = va_arg(ap, int);
                 itoa(arg_int, &buf_ptr, 16);
                 index_char = *(++ index_ptr);
 
                 // 跳过格式字符并更新index_char
+                break;
+
+            case 'd':
+                arg_int = va_arg(ap, int);
+                // 如果是负数 将其转正后在正数前面输出个负号 '-'
+                if (arg_int < 0) {
+
+                    arg_int = 0 - arg_int;
+                    *buf_ptr ++ = '-';
+
+                }
+                itoa(arg_int, &buf_ptr, 10);
+                index_char = *(++ index_ptr);
                 break;
 
         }

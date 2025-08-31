@@ -64,14 +64,16 @@ void k_thread_b(void* arg) {
 
 void u_prog_a(void) {
 
-    printf(" prog_a_pid:0x%x\n", getpid());
+    char* name = "prog_a";
+    printf(" i am %s my pid is:0x%d%c\n", name, getpid(), '\n');
     while(1);
  
 }
 
 void u_prog_b(void) {
 
-    printf(" prog_B_pid:0x%x\n", getpid());
+    char* name = "prog_b";
+    printf(" i am %s my pid is:0x%d%c\n", name, getpid(), '\n');
     while(1);
  
 }
