@@ -18,12 +18,12 @@
 // 中断描述结构体
 struct gate_desc {
 
-    uint16_t func_offset_low_word;
-    uint16_t selector;
-    uint8_t   dcount;                   // 双字计数字段 门描述的第四字节
+    uint16_t    func_offset_low_word;
+    uint16_t    selector;
+    uint8_t     dcount;                 // 双字计数字段 门描述的第四字节
 
-    uint8_t attribute;
-    uint16_t func_offset_high_word;
+    uint8_t     attribute;
+    uint16_t    func_offset_high_word;
 
 };
 
@@ -61,9 +61,6 @@ static void pic_init(void) {
     outb(PIC_M_DATA, 0xfe);
     outb(PIC_S_DATA, 0xff);
     
-    // 测试键盘 只打开键盘中断 其他全部关闭
-    // outb(PIC_M_DATA, 0xfc);
-    // outb(PIC_S_DATA, 0xff);
 
     put_str("   pic_init done\n");
 

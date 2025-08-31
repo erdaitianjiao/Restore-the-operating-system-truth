@@ -131,7 +131,10 @@ static void make_main_thread(void) {
     // 就是为其预留pcb的 因此pcb的地址是0xc009e000
     // 不需要通过get_kernel_page另分配一页
     main_thread = running_thread();
+
+    // debug
     init_thread(main_thread, "main", 31);
+
 
     // main函数是当前进程 当前线程不在thread_ready_list中
     // 所以只能将其加入thread_all_list中
