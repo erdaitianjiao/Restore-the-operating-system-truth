@@ -7,6 +7,7 @@
 #include "keyboard.h"
 #include "process.h"
 #include "stdio.h"
+#include "memory.h"
 
 void k_thread_a(void*);
 void k_thread_b(void*);
@@ -21,8 +22,8 @@ int main(void) {
     put_str("I am kernel\n");
     init_all();
 
-    process_execute(u_prog_a, "user_prog_a");
-    process_execute(u_prog_b, "user_prog_b");
+    // process_execute(u_prog_a, "user_prog_a");
+    // process_execute(u_prog_b, "user_prog_b");
 
     intr_enable();                                          // 打开中断 使时钟中断起作用
 
@@ -42,9 +43,9 @@ int main(void) {
 void k_thread_a(void* arg) { 
 
     char* para = arg;
-
-    console_put_str(" thread_a_pid:0x");
-    console_put_int(sys_getpid());
+    void* addr = sys_malloc(33);
+    console_put_str(" I am thread_a, sys_malloc(33), addr is 0x");
+    console_put_int((int)addr);
     console_put_char('\n');
     while(1);
 
@@ -55,9 +56,11 @@ void k_thread_b(void* arg) {
 
     char* para = arg;
 
-    console_put_str(" thread_b_pid:0x");
-    console_put_int(sys_getpid());
+    void* addr = sys_malloc(63);
+    console_put_str(" I am thread_b, sys_malloc(63), addr is 0x");
+    console_put_int((int)addr);
     console_put_char('\n');
+
     while(1);
 
 }
@@ -65,7 +68,7 @@ void k_thread_b(void* arg) {
 void u_prog_a(void) {
 
     char* name = "prog_a";
-    printf(" i am %s my pid is:0x%d%c\n", name, getpid(), '\n');
+    printf(" prog_a_pid:0x%x\n", getpid());
     while(1);
  
 }
