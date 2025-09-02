@@ -47,7 +47,6 @@ static inline uint8_t inb(uint16_t port) {
 static inline void insw(uint16_t port, void* addr, uint32_t word_cnt) {
 
     // insw是从port读取16位内容写入es:edi只想的内存
-
     asm volatile ("cld\n\t" "rep insw" : "+D" (addr), "+c" (word_cnt) : "d" (port) : "memory");
 
 }

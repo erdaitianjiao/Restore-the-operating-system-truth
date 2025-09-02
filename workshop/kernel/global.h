@@ -94,5 +94,6 @@ struct gdt_desc {
 
 };
 
+#define UNUSED __attribute__ ((unused))
 
 #endif
