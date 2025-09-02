@@ -44,7 +44,10 @@ struct ide_channel {
     struct disk devices[2];             // 一个通道两个磁盘 一个主 一个从
 
 };
-
+static void write2sector(struct disk* hd, void* buf, uint8_t sec_cnt);
+static bool busy_wait(struct disk* hd);
+void ide_read(struct disk* hd, uint32_t lba, void* buf, uint32_t sec_cnt);
+void intr_hd_handler(uint8_t irq_no);
 void ide_init();
 
 #endif

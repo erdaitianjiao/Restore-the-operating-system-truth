@@ -4,15 +4,16 @@
 #include "thread.h"
 #include "debug.h"
 #include "interrupt.h"
+#include "stdint.h"
 
 #define IRQ0_FREQUENCY 	        100
 #define INPUT_FREQUENCY         1193180
-#define COUNTER0_VALUE		    INPUT_FREQUENCY / IRQ0_FREQUENCY
-#define COUNTER0_PORT		    0X40
-#define COUNTER0_NO 		    0
-#define COUNTER_MODE		    2
-#define READ_WRITE_LATCH	    3
-#define PIT_COUNTROL_PORT	    0x43
+#define COUNTER0_VALUE          INPUT_FREQUENCY / IRQ0_FREQUENCY
+#define COUNTER0_PORT           0X40
+#define COUNTER0_NO             0
+#define COUNTER_MODE            2
+#define READ_WRITE_LATCH        3
+#define PIT_COUNTROL_PORT       0x43
 
 // 多少ms发生一个中断
 #define mil_seconds_per_intr    (1000 / IRQ0_FREQUENCY)
