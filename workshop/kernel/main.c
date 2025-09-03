@@ -24,6 +24,9 @@ int main(void) {
     init_all();
 
     intr_enable();                              // 打开中断 使时钟中断起作用
+
+    while (1);
+
     process_execute(u_prog_a, "user_prog_a");
     process_execute(u_prog_b, "user_prog_b");
                                              

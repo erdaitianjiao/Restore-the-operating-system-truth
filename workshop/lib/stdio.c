@@ -62,6 +62,11 @@ uint32_t vsprintf(char* str, const char* format, va_list ap) {
                 index_char = *(++ index_ptr);
                 break;
 
+            case 'c':
+                *(buf_ptr ++) = va_arg(ap, char);
+                index_char = *(++ index_ptr);
+                break;
+
             case 'x':
                 arg_int = va_arg(ap, int);
                 itoa(arg_int, &buf_ptr, 16);

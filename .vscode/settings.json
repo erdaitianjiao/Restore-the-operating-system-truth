@@ -2,22 +2,10 @@
     "files.associations": {
         "*.S": "assembly",
         "*.c": "c",
-        "stdint.h": "c",
-        "global.h": "c",
-        "stdint-gcc.h": "c",
-        "string.h": "c",
-        "print.h": "c",
-        "debug.h": "c",
-        "memory.h": "c",
-        "interrupt.h": "c",
-        "thread.h": "c",
-        "keyboard.h": "c",
-        "tss.h": "c",
-        "sync.h": "c",
-        "syscall.h": "c"
+        "*.h": "c"
     },
     "background.fullscreen": {
-        "images": ["file:///f:/entertainment/图片/美图/壁纸用/03.png"],
+        "images": ["file:///f:/entertainment/图片/美图/壁纸用/04.png"],
         "opacity": 0.7,
         "size": "cover",
         "position": "center",
