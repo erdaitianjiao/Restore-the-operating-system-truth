@@ -48,6 +48,14 @@ static void write2sector(struct disk* hd, void* buf, uint8_t sec_cnt);
 static bool busy_wait(struct disk* hd);
 void ide_read(struct disk* hd, uint32_t lba, void* buf, uint32_t sec_cnt);
 void intr_hd_handler(uint8_t irq_no);
+static void select_disk(struct disk* hd);
+static void select_sector(struct disk* hd, uint32_t lba, uint8_t sec_cnt);
+static void cmd_out(struct ide_channel* channel, uint8_t cmd);
+static void read_from_sector(struct disk* hd, void* buf, uint8_t sec_cnt);
+static void swap_pairs_bytes(const char* dst, char* buf, uint32_t len);
+static void identify_disk(struct disk* hd);
+static void partition_scan(struct disk* hd, uint32_t ext_lba);
+static bool partition_info(struct list_elem* pelem, int arg UNUSED);
 void ide_init();
 
 #endif

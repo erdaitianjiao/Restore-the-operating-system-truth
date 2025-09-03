@@ -92,7 +92,7 @@ bool elem_find(struct list* plist, struct list_elem* obj_elem) {
 // arg给func来判断elem是否符合条件
 // 本函数的功能是遍历列表的所有元素 逐个判断是否有符合条件的元素
 // 找到符合条件的元素指针 否则返回NULL
-struct list_elem* list_traval(struct list* plist, function func, int arg) {
+struct list_elem* list_traversal(struct list* plist, function func, int arg) {
 
     struct list_elem* elem = plist->head.next;
 
