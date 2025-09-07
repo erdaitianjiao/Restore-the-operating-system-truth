@@ -17,7 +17,7 @@ struct partition {
     struct super_block* sb;             // 本分区的超级块
     struct bitmap block_bitmap;         // 块位图
     struct bitmap inode_bitmap;         // i 节点位图
-    struct list open_incode;            // 本分区打开的 i 节点队列
+    struct list open_inode;             // 本分区打开的 i 节点队列
 
 };
 
@@ -44,10 +44,16 @@ struct ide_channel {
     struct disk devices[2];             // 一个通道两个磁盘 一个主 一个从
 
 };
+
+extern uint8_t channel_cnt;
+extern struct ide_channel channels[];
+extern struct list partition_list;
+
 static void write2sector(struct disk* hd, void* buf, uint8_t sec_cnt);
 static bool busy_wait(struct disk* hd);
 void ide_read(struct disk* hd, uint32_t lba, void* buf, uint32_t sec_cnt);
 void intr_hd_handler(uint8_t irq_no);
+void ide_write(struct disk* hd, uint32_t lba, void* buf, uint32_t sec_cnt);
 static void select_disk(struct disk* hd);
 static void select_sector(struct disk* hd, uint32_t lba, uint8_t sec_cnt);
 static void cmd_out(struct ide_channel* channel, uint8_t cmd);

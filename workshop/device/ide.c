@@ -256,6 +256,7 @@ void ide_write(struct disk* hd, uint32_t lba, void* buf, uint32_t sec_cnt) {
 
     ASSERT(lba <= max_lba);
     ASSERT(sec_cnt > 0);
+    lock_acquire(&hd->my_channel->lock);
 
     // 1 先选择操作磁盘的硬盘
     select_disk(hd);
