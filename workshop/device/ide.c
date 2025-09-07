@@ -7,6 +7,7 @@
 #include "io.h"
 #include "list.h"
 #include "stdio.h"
+#include "sync.h"
 #include "string.h"
 
 // 定义硬盘各寄存器的端口号
@@ -20,7 +21,7 @@
 #define reg_status(channel)         (channel->port_base + 7)
 #define reg_cmd(channel)            (reg_status(channel))
 #define reg_alt_status(channel)     (channel->port_base + 0x206)
-#define reg_atl(channel)            (reg_alt_status(channel))
+#define reg_ctl(channel)            (reg_alt_status(channel))
 
 
 // reg_status 寄存器的一些关键位
@@ -299,7 +300,6 @@ void ide_write(struct disk* hd, uint32_t lba, void* buf, uint32_t sec_cnt) {
 
         // 在硬盘响应期间阻塞自己
         sema_down(&hd->my_channel->disk_done);
-        secs_done += secs_op;
         secs_done += secs_op;    
     }
 
@@ -549,6 +549,7 @@ void ide_init() {
             sprintf(hd->name, "sd%c", 'a' + channel_no * 2 + dev_no);
 
             identify_disk(hd);              // 获得硬盘参数
+
             if (dev_no != 0) {
 
                 // 内核本身的裸硬盘(hd60M.img)不处理

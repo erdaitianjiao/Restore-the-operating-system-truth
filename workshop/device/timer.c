@@ -5,6 +5,7 @@
 #include "debug.h"
 #include "interrupt.h"
 #include "stdint.h"
+#include "stdio-kernel.h"
 
 #define IRQ0_FREQUENCY 	        100
 #define INPUT_FREQUENCY         1193180
@@ -42,10 +43,6 @@ static void frequency_set(uint8_t counter_port,
 static void intr_timer_handler(void) {
 
     struct task_struct* cur_thread = running_thread();
-
-    // debug
-    //put_int(cur_thread->stack_magic);
-    //put_char('\n');
 
     ASSERT(cur_thread->stack_magic == 0x20050102);              // 检查栈时候溢出
 

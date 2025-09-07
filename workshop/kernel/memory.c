@@ -309,6 +309,7 @@ void* get_a_page(enum pool_flags pf, uint32_t vaddr) {
     void* page_phyaddr = palloc(mem_pool);
     if (page_phyaddr == NULL) {
 
+        lock_release(&mem_pool->lock);
         return NULL;
 
     }
@@ -581,6 +582,9 @@ void mfree_page(enum pool_flags pf, void* _vaddr, uint32_t pg_cnt) {
         // 位于user_pool内存池
         vaddr -= PG_SIZE;
         while (page_cnt < pg_cnt) {
+            
+            vaddr += PG_SIZE;
+            pg_phy_addr = addr_v2p(vaddr);
 
             // 确保物理地址属于用户物理内存池
             ASSERT((pg_phy_addr % PG_SIZE) == 0 && pg_phy_addr >= user_pool.phy_addr_start);

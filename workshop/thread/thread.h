@@ -5,7 +5,9 @@
 #include "list.h"
 #include "memory.h"
 
-extern struct list thread_ready_list,thread_all_list;
+#define MAX_FILES_OPEN_PER_PROC     8
+
+extern struct list thread_ready_list, thread_all_list;
 
 // 自定义通用函数类型 将成为很多线程函数中作为形式参数
 typedef void thread_func(void*);
@@ -92,6 +94,9 @@ struct task_struct {
     
     // 此任务自上cpu运行至今占用了多少cpu滴答数 也就是执行了多久
     uint32_t elapsed_ticks;
+    
+    // genenal_tag的作用是与线程在一般队列中的节点
+    int32_t fd_table[MAX_FILES_OPEN_PER_PROC]; 
 
     // general_tag的作用是用于在线程在一般队列中的节点
     struct list_elem general_tag;
