@@ -18,6 +18,8 @@ enum file_types {
 
 };
 
+extern struct partition* cur_part;
+
 static void partition_format(struct partition* part);
 void filesys_init();
 

@@ -9,6 +9,7 @@
 #include "memory.h"
 #include "debug.h"
 #include "list.h"
+#include "stdio-kernel.h"
 
 struct partition* cur_part;                 // 默认情况下操作的是哪个分区
 
@@ -71,7 +72,7 @@ static bool mount_partition(struct list_elem* pelem, int arg) {
         ide_read(hd, sb_buf->inode_bitmap_lba, cur_part->inode_bitmap.bits, sb_buf->inode_bitmap_sects);
 
 
-        list_init(&cur_part->open_inode);
+        list_init(&cur_part->open_inodes);
         printk("mount %s done!\n", part->name);
 
         return true;            // 使得list_traversal结束遍历

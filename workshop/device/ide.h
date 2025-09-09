@@ -17,7 +17,7 @@ struct partition {
     struct super_block* sb;             // 本分区的超级块
     struct bitmap block_bitmap;         // 块位图
     struct bitmap inode_bitmap;         // i 节点位图
-    struct list open_inode;             // 本分区打开的 i 节点队列
+    struct list open_inodes;            // 本分区打开的 i 节点队列
 
 };
 

@@ -24,5 +24,11 @@ struct dir_entry {
 
 };
 
+void open_root_dir(struct partition* part);
+struct dir* dir_open(struct partition* part, uint32_t inode_no);
+bool search_dir_entry(struct partition* part, struct dir* pdir, const char* name, struct dir_entry* dir_e);
+void dir_close(struct dir* dir);
+void create_dir_entry(char* filename, uint32_t inode_no, uint8_t file_type, struct dir_entry* p_de);
+
 
 #endif
