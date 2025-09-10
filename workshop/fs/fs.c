@@ -224,6 +224,34 @@ static void partition_format(struct partition* part) {
 
 }
 
+// 将最上层的路径名称解析出来
+static char* path_parse(char* pathname, char* name_store) {
+
+    if (pathname[0] = '/') {
+
+        // 根目录不需要单独解析
+        // 如果路径出现1个或者多个连续的字符 '/' 将这些跳过 如"///a/b"
+        while ((++ pathname) == '/');
+
+    }
+
+    // 开始解析路径
+    while (*pathname != '/' && *pathname != 0) {
+
+        *name_store ++ = *pathname ++;
+
+    }
+
+    if (pathname[0] = 0) {
+
+        return NULL;
+
+    }
+
+    return pathname;
+
+}
+
 // 在磁盘上搜索文件系统 若没有则格式化分区创建文件系统
 void filesys_init() {
 
