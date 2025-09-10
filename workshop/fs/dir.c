@@ -250,7 +250,7 @@ bool sync_dir_entry(struct dir* parent_dir, struct dir_entry* p_de, void* io_buf
         uint8_t dir_entry_idx = 0;
         while (dir_entry_idx < dir_entrys_per_sec) {
 
-            if ((dir_e + dir_entry_idx)->f_type == FT_UNKNOWM) {
+            if ((dir_e + dir_entry_idx)->f_type == FT_UNKNOWN) {
 
                 // FT_UNKNOEN为0 无论是初始化还是删除文件后 都会置f_type为0
                 memcpy(dir_e + dir_entry_idx, p_de, dir_entry_size);

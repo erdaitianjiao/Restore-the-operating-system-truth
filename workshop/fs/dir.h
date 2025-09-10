@@ -24,6 +24,7 @@ struct dir_entry {
 
 };
 
+extern struct dir root_dir;
 void open_root_dir(struct partition* part);
 struct dir* dir_open(struct partition* part, uint32_t inode_no);
 bool search_dir_entry(struct partition* part, struct dir* pdir, const char* name, struct dir_entry* dir_e);

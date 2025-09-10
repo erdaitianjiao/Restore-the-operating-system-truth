@@ -252,6 +252,115 @@ static char* path_parse(char* pathname, char* name_store) {
 
 }
 
+// 返回路径深度 比如 /a/b/c 深度为3
+int32_t path_depth_cnt(char* pathname) {
+
+    ASSERT(pathname != NULL);
+    char* p = pathname;
+
+    // 用于path_parse的参数做路径解析
+    char name[MAX_FILE_NAME_LEN];
+    uint32_t depth = 0;
+    
+    // 解析路径 从中拆除各个分级的名称
+    p = path_parse(p, name);
+    while (name[0]) {
+
+        depth ++;
+        memset(name, 0, MAX_FILE_NAME_LEN);
+        if (p) {
+
+            p = path_parse(p, name);
+
+        }
+
+    }
+    return depth;
+
+}
+
+// 搜索文件pathname 若找到则返回其inode号 否则返回-1
+static int search_file(const char* pathname, struct path_search_record* searched_recored) {
+
+    // 如果待查找的是根目录 为了避免无用查找 直接返回已知根目录信息
+    if (!strcmp(pathname, "/") || strcmp(pathname, "/.") || !setcpy(pathname, "/..")) {
+
+        searched_recored->parent_dir = &root_dir;
+        searched_recored->file_type = FT_DIRECTORY;
+        searched_recored->searched_path[0] = 0;             // 搜索路径置空
+        return 0;
+
+    }
+
+    uint32_t path_len = strlen(pathname);
+    // 保证pathname至少是这样的路径 /x 且小于最大长度
+    ASSERT(pathname[0] == '/' && path_len > 1 && path_len < MAX_PATH_LEN);
+    char* sub_path = (char*)pathname;
+    struct dir* parent_dir = &root_dir;
+    struct dir_entry dir_e;
+
+    // 记录路径解析出来的各级名称 如路径 "/a/b/c"
+    // 数组name每次的值分别是 "a" "b" "c"
+    char name[MAX_FILE_NAME_LEN] = {0};
+
+    searched_recored->parent_dir = parent_dir;
+    searched_recored->file_type = FT_UNKNOWN;
+    uint32_t parent_inode_no = 0;
+
+    sub_path = path_parse(sub_path, name);
+    while (name[0]) {
+
+        // 如果第一个字符就是结束符 结束循环
+        // 记录查找过的路径 但不能超过search_path长度 结束循环
+        ASSERT(strlen(searched_recored->searched_path) < 512);
+
+        // 记录已存在的父目录
+        strcat(searched_recored->searched_path, "/");
+        strcat(searched_recored->searched_path, name);
+
+        // 在所给的目录中查找文件
+        if (search_dir_entry(cur_part, parent_dir, name, &dir_e)) {
+            memset(name, 0, MAX_FILE_NAME_LEN);
+            // 若sub_path不等于NULL 也就是未结束时继续拆分路径
+            if (sub_path) {
+
+                sub_path = path_parse(sub_path, name);
+
+            }
+            if (FT_DIRECTORY == dir_e.f_type) {
+                // 如果打开的是目录
+                parent_inode_no = parent_dir->inode->i_no;
+                dir_close(parent_dir);
+                parent_dir = dir_open(cur_part, dir_e.i_no);        // 更新父目录
+                searched_recored->parent_dir = parent_dir;
+                continue;;
+
+            } else if (FT_REFULAR == dir_e.f_type) {
+                // 若是普通文件
+                searched_recored->file_type = FT_REFULAR;
+                return dir_e.i_no;
+
+            } 
+
+        } else {
+            // 若找不到 返回-1
+            // 找不到目录项的时候 要留着parent_dir不要关闭 
+            // 若是创建新文件的话需要在parent_dir中创建
+            return -1;
+
+        }
+
+    }
+    // 执行到这里 必然是遍历了完成路径 并且查找的文件或目录只有同名目录存在
+    dir_close(searched_recored->parent_dir);
+
+    // 保存被查找目录的直接父目录
+    searched_recored->parent_dir = dir_open(cur_part, parent_inode_no);
+    searched_recored->file_type = FT_DIRECTORY;
+    return dir_e.i_no;
+
+}
+
 // 在磁盘上搜索文件系统 若没有则格式化分区创建文件系统
 void filesys_init() {
 
