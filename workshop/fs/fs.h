@@ -45,5 +45,6 @@ void filesys_init();
 static char* path_parse(char* pathname, char* name_store);
 int32_t path_depth_cnt(char* pathname);
 static int search_file(const char* pathname, struct path_search_record* searched_recored);
+int32_t sys_open(const char* pathname, uint8_t flags);
 
 #endif

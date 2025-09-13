@@ -9,6 +9,8 @@
 #include "stdio.h"
 #include "memory.h"
 #include "syscall.h"
+#include "file.h"
+#include "fs.h"
 
 void k_thread_a(void*);
 void k_thread_b(void*);
@@ -25,7 +27,7 @@ int main(void) {
 
     intr_enable();                              // 打开中断 使时钟中断起作用
 
-    while (1);
+    sys_open("/file3", O_CREAT);
 
     process_execute(u_prog_a, "user_prog_a");
     process_execute(u_prog_b, "user_prog_b");
@@ -35,6 +37,7 @@ int main(void) {
     // console_put_char('\n');
     thread_start("k_thread_a", 31, k_thread_a, "argA ");
     thread_start("k_thread_b", 31, k_thread_b, "argB ");
+
 
     while (1);
 

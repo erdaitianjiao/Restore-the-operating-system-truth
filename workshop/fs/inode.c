@@ -6,6 +6,7 @@
 #include "thread.h"
 #include "interrupt.h"
 #include "stdio-kernel.h"
+#include "debug.h"
 
 // 用于存储inode位置
 struct inode_psition {
@@ -146,7 +147,7 @@ struct inode* inode_open(struct partition* part, uint32_t inode_no) {
 
         // 否则所查找的inode扇区未跨扇区 一个扇区大小的缓冲区足够
         inode_buf = (char*)sys_malloc(512);
-        ide_raed(part->my_disk, inode_pos.sec_lba, inode_buf, 1);
+        ide_read(part->my_disk, inode_pos.sec_lba, inode_buf, 1);
 
     }
 
