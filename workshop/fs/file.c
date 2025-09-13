@@ -8,6 +8,9 @@
 #include "super_block.h"
 #include "string.h"
 #include "global.h"
+#include "interrupt.h"
+
+
 
 struct file file_table[MAX_FILE_OPEN];
 
@@ -44,11 +47,11 @@ int32_t pcb_fd_install(int32_t global_fd_idx) {
     struct task_struct* cur = running_thread();
     // 跳过stdin stdout stderr
     uint8_t local_fd_idx = 3;
-    while (local_fd_idx < MAX_FILE_OPEN) {
+    while (local_fd_idx < MAX_FILES_OPEN_PER_PROC) {
 
         if (cur->fd_table[local_fd_idx] == -1) {
 
-            // -1表示free_flot 可用
+            // -1表示free_slot 可用
             cur->fd_table[local_fd_idx] = global_fd_idx;
             break;
 
@@ -58,7 +61,7 @@ int32_t pcb_fd_install(int32_t global_fd_idx) {
 
     }
 
-    if (local_fd_idx == MAX_FILE_OPEN) {
+    if (local_fd_idx == MAX_FILES_OPEN_PER_PROC) {
 
         printk("exceed max open files_per_proc\n");
         return -1;
@@ -199,6 +202,65 @@ rollback:
     sys_free(io_buf);
     return -1;
 
+
+}
+
+// 打开标号为inode_no的inode对应的文件 成功返回文件描述符 失败返回-1
+int32_t file_open(uint32_t inode_no, uint8_t flag) {
+
+    int fd_idx = get_free_slot_in_global();
+    if (fd_idx == -1) {
+
+        printk("exceed max open files\n");
+        return -1;
+
+    }
+    file_table[fd_idx].fd_inode = inode_open(cur_part, inode_no);
+    file_table[fd_idx].fd_pos = 0;
+
+    // 每次打开文件 要将fd_pos换原为0 即让文件内的指针指向开头
+    file_table[fd_idx].fd_flag = flag;
+    bool* write_deny = &file_table[fd_idx].fd_inode->write_deny;
+
+    if (flag & O_WRONLY || flag & O_RDWD) {
+
+        // 只要是关于写文件 判断是否其他进程正在写文件
+        // 若是写文件 不考虑 write_deny
+        // 以下进入临界区前先关中断
+        enum intr_status old_status = intr_disable();
+        if (!(*write_deny)) {
+
+            // 如果没有其他进程写该文件 则占用
+            *write_deny = true;                 // 置为true 避免多个进程同时写此文件
+            intr_set_status(old_status); 
+
+        } else {
+
+            // 直接失败返回
+            intr_set_status(old_status);
+            printk("file cant be write now, try again later");
+            return -1;
+
+        }
+
+    }
+    // 若是读文件或者创建文件 则保持默认
+    return pcb_fd_install(fd_idx);
+
+}
+
+// 关闭文件
+int32_t file_close(struct file* file) {
+
+    if (file == NULL) {
+
+        return -1;
+
+    }
+    file->fd_inode->write_deny = false;
+    inode_close(file->fd_inode);
+    file->fd_inode = NULL;                  // 使文件结构可用
+    return 0;
 
 }
 

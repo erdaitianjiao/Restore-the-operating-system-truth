@@ -25,9 +25,7 @@ int main(void) {
     put_str("I am kernel\n");
     init_all();
 
-    intr_enable();                              // 打开中断 使时钟中断起作用
-
-    sys_open("/file3", O_CREAT);
+    //intr_enable();                              // 打开中断 使时钟中断起作用
 
     process_execute(u_prog_a, "user_prog_a");
     process_execute(u_prog_b, "user_prog_b");
@@ -38,6 +36,10 @@ int main(void) {
     thread_start("k_thread_a", 31, k_thread_a, "argA ");
     thread_start("k_thread_b", 31, k_thread_b, "argB ");
 
+    uint32_t fd = sys_open("/file2", O_RDONLY);
+    printf("fd:%d\n", fd);
+    sys_close(fd);
+    printf("%d clsoed now\n", fd);
 
     while (1);
 
