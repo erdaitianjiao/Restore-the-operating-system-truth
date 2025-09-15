@@ -24,7 +24,7 @@ enum oflags {
 
     O_RDONLY,               // 只读
     O_WRONLY,               // 只写
-    O_RDWD,                 // 读写
+    O_RDWR,                 // 读写
     O_CREAT = 4             // 创建
 
 };
@@ -48,5 +48,6 @@ static int search_file(const char* pathname, struct path_search_record* searched
 int32_t sys_open(const char* pathname, uint8_t flags);
 static uint32_t fd_local2global(uint32_t local_fd);
 int32_t sys_close(int32_t fd);
+int32_t sys_write(int32_t fd, const void* buf, uint32_t count);
 
 #endif
