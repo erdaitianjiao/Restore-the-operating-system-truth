@@ -454,7 +454,7 @@ int32_t file_write(struct file* file, const void* buf, uint32_t count) {
                 block_lba = block_bitmap_alloc(cur_part);
                 if (block_lba == -1) {
 
-                    printk("file_write block_bitmap_allic for situation 3 failed\n");
+                    printk("file_write: block_bitmap_allic for situation 3 failed\n");
                     return -1;
 
                 }
@@ -507,6 +507,133 @@ int32_t file_write(struct file* file, const void* buf, uint32_t count) {
     sys_free(all_blocks);
     sys_free(io_buf);
     return bytes_written;
+
+}
+
+// 从文件file中读取count个字节写入buf 返回读出的字节数 是发哦文件尾则返回-1
+int32_t file_read(struct file* file, void* buf, uint32_t count) {
+
+    uint32_t* buf_dst = (uint8_t*)buf;
+    uint32_t size = count, size_left = size;
+
+    // 若要读取的字节数超过了文件可读的剩余量 就用剩余量作为待读取的字节数
+    if (file->fd_pos + count > file->fd_inode->i_size) {
+
+        size = file->fd_inode->i_size - file->fd_pos;
+        size_left = size;
+        if (size == 0) {
+
+            return -1;
+
+        }
+
+    }
+    uint8_t* io_buf = sys_malloc(BLOCK_SIZE);
+    if (io_buf == NULL) {
+
+        printk("file_read: sys_malloc for io_buf failed\n");
+
+    }
+    uint32_t* all_blocks = (uint32_t*)sys_malloc(BLOCK_SIZE + 48);
+    if (all_blocks == NULL) {
+
+        printk("file_read: sys_malloc for all_blocks failed\n");
+        return -1;
+
+    }
+    // 数据所在块的起始地址
+    uint32_t block_read_start_idx = file->fd_pos / BLOCK_SIZE;
+    
+    // 数据块的终止地址
+    uint32_t block_read_end_idx = (file->fd_pos + size) / BLOCK_SIZE;
+
+    uint32_t read_blocks = block_read_start_idx - block_read_end_idx;
+
+    // 如增量为0 表示在同一个扇区
+    ASSERT(block_read_start_idx < 139 && block_read_end_idx < 139);
+
+    uint32_t indirect_block_table;              // 用于获取一级间接地址
+    uint32_t block_idx;                         // 获取待读取的地址
+
+    // 以下开始构建all_blocks块地址数组 专门存储用到的块地址(本程序中块大小同扇区大小)
+    if (read_blocks == 0) {
+        
+        // 在同一块扇区读取数据
+        ASSERT(block_read_end_idx == block_read_start_idx);
+        if (block_read_end_idx < 12) {
+
+            block_idx = block_read_end_idx;
+            all_blocks[block_idx] = file->fd_inode->i_sectors[block_idx];
+
+        } else {
+
+            // 若用到了一级间接块表 需要将中间的块读进来
+            indirect_block_table = file->fd_inode->i_sectors[12];
+            ide_read(cur_part->my_disk, indirect_block_table, all_blocks + 12, 1);
+
+        }
+
+    } else {
+
+        // 若需要读多块
+        // 情况一 起始和终止都在直接快
+        if (block_read_end_idx < 12) {
+
+            block_idx = block_read_end_idx;
+            while (block_idx <= block_read_end_idx) {
+
+                all_blocks[block_idx] = file->fd_inode->i_sectors[block_idx];
+                block_idx ++;
+
+            }
+
+        } else if (block_read_start_idx < 12 && block_read_end_idx > 12) {
+
+            // 情况二 起始在直接块 终止在间接块
+            // 先写直接块到all_blocks
+            block_idx = block_read_start_idx;
+            while (block_idx < 12) {
+
+                all_blocks[block_idx] = file->fd_inode->i_sectors[12];
+                block_idx ++;
+
+            }
+            // 确保已经分配了一级间接块表
+            ASSERT(file->fd_inode->i_sectors[12] != 0);
+
+            // 在将间接块地址写入all_blocks
+            indirect_block_table = file->fd_inode->i_sectors[12];
+            // 将一级间接块表读进来写入到第13个块的位置之后
+            ide_read(cur_part->my_disk, indirect_block_table, all_blocks + 12, 1);
+
+        }
+
+    }
+    // 用到的块地址已经收集到all_blocks中 现在开始读数据
+    uint32_t sec_idx, sec_lba, sec_off_bytes, sec_left_bytes, chunk_size;
+    uint32_t bytes_read = 0;
+    while (bytes_read < size) {
+
+        // 读完为止
+        sec_idx = file->fd_pos / BLOCK_SIZE;
+        sec_lba = all_blocks[sec_idx];
+        sec_off_bytes = file->fd_pos % BLOCK_SIZE;
+        sec_left_bytes = BLOCK_SIZE - sec_off_bytes;
+        // 待读取的数据大小
+        chunk_size = size_left < sec_left_bytes ? size_left : sec_left_bytes;
+
+        memset(io_buf, 0, BLOCK_SIZE);
+        ide_read(cur_part->my_disk, sec_lba, io_buf, 1);
+        memcpy(buf_dst, io_buf + sec_off_bytes, chunk_size);
+        buf_dst += chunk_size;
+        file->fd_pos += chunk_size;
+        bytes_read += chunk_size;
+        size_left -= chunk_size;
+
+    }
+    sys_free(all_blocks);
+    sys_free(io_buf);
+    return bytes_read;
 
 }
 
