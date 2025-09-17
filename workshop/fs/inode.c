@@ -7,9 +7,11 @@
 #include "interrupt.h"
 #include "stdio-kernel.h"
 #include "debug.h"
+#include "fs.h"
+#include "file.h"
 
 // 用于存储inode位置
-struct inode_psition {
+struct inode_position {
 
     bool two_sec;           // inode是否跨区
     uint32_t sec_lba;       // inode所在的扇区号
@@ -18,7 +20,7 @@ struct inode_psition {
 };
 
 // 获取inode所在的扇区和扇区内偏移量
-static void inode_locate(struct partition* part, uint32_t inode_no, struct inode_psition* inode_pos) {
+static void inode_locate(struct partition* part, uint32_t inode_no, struct inode_position* inode_pos) {
 
     // inode_table在硬盘上是连续的
     ASSERT(inode_no < 4096);
@@ -57,7 +59,7 @@ void inode_sync(struct partition* part, struct inode* inode, void* io_buf) {
 
     // io_buf是用于硬盘io缓冲区
     uint8_t inode_no = inode->i_no;
-    struct inode_psition inode_pos;
+    struct inode_position inode_pos;
 
     // inode位置的信息会存入inode_pos
     inode_locate(part, inode_no, &inode_pos);
@@ -117,7 +119,7 @@ struct inode* inode_open(struct partition* part, uint32_t inode_no) {
     }
 
     // 由于open_inodes链表找不到 下面从硬盘上读入inode并加入到此链表
-    struct inode_psition inode_pos;
+    struct inode_position inode_pos;
 
     // inode位置信息会存入inode_pos 包括inode所在扇区地址和扇区内的字节偏移量
     inode_locate(part, inode_no, &inode_pos);
@@ -185,6 +187,104 @@ void inode_close(struct inode* inode) {
     intr_set_status(old_status);
 
 }
+
+// 将硬盘part上的inode清空
+void inode_delete(struct partition* part, uint32_t inode_no, void* io_buf) {
+
+    ASSERT(inode_no < 4096);
+    struct inode_position inode_pos;
+
+    // inode位置信息会存入inode_pos
+    inode_locate(part, inode_no, &inode_pos);
+    
+    char* inode_buf = (char*)io_buf;
+    if (inode_pos.two_sec) {
+
+        // 如果跨区 读入两个扇区
+        ide_read(part->my_disk, inode_pos.sec_lba, inode_buf, 2);
+
+        // 将inode_buf清零
+        memset((inode_buf + inode_pos.off_size), 0, sizeof(struct inode));
+        
+        // 写入磁盘
+        ide_write(part->my_disk, inode_pos.sec_lba, inode_buf, 2);
+
+    }  else {
+
+        // 未跨区 只写入一个磁盘
+                // 如果跨区 读入两个扇区
+        ide_read(part->my_disk, inode_pos.sec_lba, inode_buf, 1);
+
+        // 将inode_buf清零
+        memset((inode_buf + inode_pos.off_size), 0, sizeof(struct inode));
+        
+        // 写入磁盘
+        ide_write(part->my_disk, inode_pos.sec_lba, inode_buf, 1);
+
+    }
+
+}
+
+// 回收inode的数据块和inode本身
+void inode_release(struct partition* part, uint32_t inode_no) {
+
+    struct inode* inode_to_del = inode_open(part, inode_no);
+    ASSERT(inode_to_del->i_no == inode_no);
+
+    // 1 回收inode占用的所有块
+    uint8_t block_idx = 0, block_cnt = 12;
+    uint32_t block_bitmap_idx;
+    uint32_t all_blocks[140] = {0};
+
+    // a 先将12个直接快存入all_blocks
+    while (block_idx < 12) {
+
+        all_blocks[block_idx] = inode_to_del->i_sectors[block_idx];
+        block_idx ++;
+
+    }
+    // b 如果一级间接块存在 将其128个间接块读到all_block[12~] 并释放一级间接块所占的扇区
+    if (inode_to_del->i_sectors[12] != 0) {
+
+        ide_read(part->my_disk, inode_to_del->i_sectors[12], all_blocks + 12, 1);
+        block_cnt = 140;
+
+        // 回收一级间接块所占的扇区
+        block_bitmap_idx = inode_to_del->i_sectors[12] - part->sb->data_start_lba;
+        ASSERT(block_bitmap_idx > 0);
+        bitmap_set(&part->block_bitmap, block_bitmap_idx, 0);
+        bitmap_sync(cur_part, block_bitmap_idx, BLOCK_BITMAP);
+
+    }
+    // c inode所有的块地址已经收集到all_blocks中 下面逐个回收
+    block_idx = 0;
+    while (block_idx < block_cnt) {
+
+        if (all_blocks[block_idx] != 0) {
+
+            block_bitmap_idx = 0;
+            block_bitmap_idx = all_blocks[block_idx] - part->sb->data_start_lba;
+            ASSERT(block_bitmap_idx > 0 );
+            bitmap_set(&part->block_bitmap, block_bitmap_idx, 0);
+            bitmap_sync(cur_part, block_bitmap_idx, BLOCK_BITMAP);
+
+        }
+        block_idx ++;
+
+    }
+    // 2回收改inode所占用的inode
+    bitmap_set(&cur_part->inode_bitmap, inode_no, 0);
+    bitmap_sync(cur_part, inode_no, INODE_BITMAP);
+
+    // debug
+    // 将inode_table中将此inode清零
+    void* io_buf = sys_malloc(1024);
+    inode_delete(part, inode_no, io_buf);
+    sys_free(io_buf);
+
+    inode_close(inode_to_del);
+
+ }
 
 // 初始化new_inode
 void inode_init(uint32_t inode_no, struct inode* new_inode) {

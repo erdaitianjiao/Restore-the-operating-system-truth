@@ -28,40 +28,52 @@ int main(void) {
 
     //intr_enable();                              // 打开中断 使时钟中断起作用
 
-    process_execute(u_prog_a, "user_prog_a");
-    process_execute(u_prog_b, "user_prog_b");
+    // process_execute(u_prog_a, "user_prog_a");
+    // process_execute(u_prog_b, "user_prog_b");
                                              
     // console_put_str(" main_pid:0x");
     // console_put_int(sys_getpid());
     // console_put_char('\n');
-    thread_start("k_thread_a", 31, k_thread_a, "argA ");
-    thread_start("k_thread_b", 31, k_thread_b, "argB ");
+
+    // thread_start("k_thread_a", 31, k_thread_a, "argA ");
+    // thread_start("k_thread_b", 31, k_thread_b, "argB ");
 
 
-    uint32_t fd = sys_open("/file2", O_RDWR);
-    printf("open /file2, fd:%d\n", fd);
-    char buf[64] = {0};
-    int read_bytes = sys_read(fd, buf, 18);
-    printf("1_read %d bytes:\n%s\n", read_bytes, buf);
+    // uint32_t fd = sys_open("/file2", O_RDWR);
+    // printf("open /file2, fd:%d\n", fd);
+    // char buf[64] = {0};
+    // int read_bytes = sys_read(fd, buf, 18);
+    // printf("1_read %d bytes:\n%s\n", read_bytes, buf);
 
-    memset(buf, 0, 64);
-    read_bytes = sys_read(fd, buf, 6);
-    printf("2_read %d bytes:\n%s\n", read_bytes, buf);
+    // memset(buf, 0, 64);
+    // read_bytes = sys_read(fd, buf, 6);
+    // printf("2_read %d bytes:\n%s\n", read_bytes, buf);
 
-    memset(buf, 0, 64);
-    read_bytes = sys_read(fd, buf, 6);
-    printf("3_read %d bytes:\n%s\n", read_bytes, buf);
+    // memset(buf, 0, 64);
+    // read_bytes = sys_read(fd, buf, 6);
+    // printf("3_read %d bytes:\n%s\n", read_bytes, buf);
     
-    printf("-------------- SEEK_SET 0 -------------\n");
-    sys_lseek(fd, 0, SEEK_SET);
+    // printf("-------------- SEEK_SET 0 -------------\n");
+    // sys_lseek(fd, 0, SEEK_SET);
 
-    fd = sys_open("/file2", O_RDWR);
+    // fd = sys_open("/file2", O_RDWR);
 
-    memset(buf, 0, 64);
-    read_bytes = sys_read(fd, buf, 24);
-    printf("4_read %d bytes:\n%s\n", read_bytes, buf);
+    // memset(buf, 0, 64);
+    // read_bytes = sys_read(fd, buf, 24);
+    // printf("4_read %d bytes:\n%s\n", read_bytes, buf);
 
-    sys_close(fd);
+    // sys_close(fd);
+
+
+    // debug
+    //uint32_t fd = sys_open("/file2", O_RDWR);
+    // struct task_struct* cur = running_thread();
+    // int32_t test = cur->fd_table[fd];
+    //sys_write(fd, "dele word\n", 12);
+    // printk("fd:%d\n", fd);
+    //sys_close("/file2");
+
+    printf("/file1 delete %s!\n", sys_unlink("/file2") == 0 ? "done" : "fail");
 
     while (1);
     return 0;

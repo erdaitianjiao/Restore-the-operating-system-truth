@@ -407,10 +407,11 @@ int32_t sys_open(const char* pathname, uint8_t flags) {
         return -1;
 
     }
+
     // 若是在最后一个路径没找到 并且不是要创建文件 就返回-1
     if (!found && !(flags & O_CREAT)) {
         
-        printk("in path %s file %s isnt exist\n", searched_record, (strrchr(searched_record.searched_path, '/') + 1));
+        printk("in path %s, file %s isnt exist\n", searched_record.searched_path, (strrchr(searched_record.searched_path, '/') + 1));
         dir_close(searched_record.parent_dir);
         return -1;
     
@@ -434,8 +435,6 @@ int32_t sys_open(const char* pathname, uint8_t flags) {
         default:
             fd = file_open(inode_no, flags);
             
-
-
     }
     // 此fd是指任务pcb->fd_table中元素的下标 并不是指全局file_table的下表
     return fd;
@@ -552,6 +551,71 @@ int32_t sys_lseek(int32_t fd, int32_t offset, uint8_t whence) {
     }
     pf->fd_pos = new_pos;
     return pf->fd_pos;
+
+}
+
+// 删除文件(非目录) 成功返回0 失败返回-1
+int32_t sys_unlink(const char* pathname) {
+
+    ASSERT(strlen(pathname) < MAX_FILE_NAME_LEN);
+
+    // 先检查待删除的文件是否存在
+    struct path_search_record searched_record;
+    memset(&searched_record, 0, sizeof(struct path_search_record));
+    
+    int inode_no = search_file(pathname, &searched_record);
+    ASSERT(inode_no != 0);
+    if (inode_no == -1) {
+
+        printk("file %s not found\n", pathname);
+        dir_close(searched_record.parent_dir);
+        return -1;
+
+    }
+    if (searched_record.file_type == FT_DIRECTORY) {
+
+        printk("can't delete a direcotry with unlink(), use rmdir() to instead\n");
+        dir_close(searched_record.parent_dir);
+        return -1;
+
+    }
+    // 检查是否在已打开文件列表中
+    uint32_t file_idx = 0;
+    while (file_idx < MAX_FILE_OPEN) {
+
+        if (file_table[file_idx].fd_inode != NULL && (uint32_t)inode_no == file_table[file_idx].fd_inode->i_no) {
+
+            break;
+
+        }
+        file_idx ++;
+
+    }
+    if (file_idx < MAX_FILE_OPEN) {
+
+        dir_close(searched_record.parent_dir);
+        printk("file %s is in use, not allow to delete!\n", pathname);
+        return -1;
+
+    }
+    ASSERT(file_idx == MAX_FILE_OPEN);
+
+    // 为delete_dir_entry申请缓冲区
+    void* io_buf = sys_malloc(SECTOR_SIZE + SECTOR_SIZE);
+    if (io_buf == NULL) {
+
+        dir_close(searched_record.parent_dir);
+        printk("sys_unlink: malloc for io_buf failed\n");
+        return -1;
+
+    }
+    struct dir* parent_dir = searched_record.parent_dir;
+    delete_dir_entry(cur_part, parent_dir, inode_no, io_buf);
+    inode_release(cur_part, inode_no);
+    sys_free(io_buf);
+    dir_close(searched_record.parent_dir);
+
+    return 0;               // 成功删除文件
 
 }
 

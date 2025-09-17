@@ -270,3 +270,167 @@ bool sync_dir_entry(struct dir* parent_dir, struct dir_entry* p_de, void* io_buf
     return false;
 
 }
+
+// 把分区part目录pdir中编号为inode_no的目录项删除
+bool delete_dir_entry(struct partition* part, struct dir* pdir, uint32_t inode_no, void* io_buf) {
+
+    struct inode* dir_inode = pdir->inode;
+    uint32_t block_idx = 0, all_blocks[140] = {0};
+
+    // 收集目录全部块地址
+    while (block_idx < 12) {
+
+        all_blocks[block_idx] = dir_inode->i_sectors[block_idx];
+        block_idx ++;
+
+    }
+    if (dir_inode->i_sectors[12] != 0) {
+
+        ide_read(part->my_disk, dir_inode->i_sectors[12], all_blocks + 12, 1);
+
+    } 
+
+    // 目录项在存储时保证不会跨扇区
+    uint32_t dir_entry_size = part->sb->dir_entry_size;
+    // 每扇区最大的目录项
+    uint32_t dir_entrys_per_sec = (SECTOR_SIZE / dir_entry_size);
+    
+    struct dir_entry* dir_e = (struct dir_entry*)io_buf;
+    struct dir_entry* dir_entry_found = NULL;
+    
+    uint8_t dir_entry_idx, dir_entry_cnt;
+    bool is_dir_first_block = false;            // 目录的第一块
+    
+    // 遍历所有块寻找目录项
+    block_idx = 0;
+    while (block_idx < 140) {
+
+        is_dir_first_block = false;
+        if (all_blocks[block_idx] == 0) {
+
+            block_idx ++;
+            continue;
+
+        }
+        dir_entry_idx = dir_entry_cnt = 0;
+        memset(io_buf, 0, SECTOR_SIZE);
+        // 读取扇区 获得目录项
+        ide_read(part->my_disk, all_blocks[block_idx], io_buf, 1);
+
+        // 遍历所有目录项 统计该扇区的目录项数量是否有待删除的目录项
+        while (dir_entry_idx < dir_entrys_per_sec) {
+
+            if ((dir_e + dir_entry_idx)->f_type != FT_UNKNOWN) {
+
+                if (!strcmp((dir_e + dir_entry_idx)->filename, ".")) {
+
+                    is_dir_first_block = true;
+
+                } else if (strcmp((dir_e + dir_entry_idx)->filename, ".") && strcmp((dir_e + dir_entry_idx)->filename, "..")) {
+
+                    // 统计这个扇区的目录项总个数 用来判断删除目录后是否回收该扇区
+                    dir_entry_cnt ++;
+                    if ((dir_e + dir_entry_idx)->i_no == inode_no) {
+                        
+                        // debug
+                        printk("here\n");
+                        printk("name:%s\n", (dir_e + dir_entry_idx)->filename);
+                        printk("i_no:%d\n", (dir_e + dir_entry_idx)->i_no);
+
+                        // 如果找到此i节点 就将其记录在dir_entry_found
+                        // 确保目录中只有一个标号为inode_no的inode 找到一次后dir_entry_found就不再是NULL
+                        ASSERT(dir_entry_found == NULL);
+                        dir_entry_found = dir_e + dir_entry_idx;
+                        // 找到也继续遍历 统计总的目录项数
+
+                    }
+
+                }
+
+            }
+            dir_entry_idx ++;
+
+        }
+        // 若此扇区未找到目录项 继续在下个扇区中找
+        if (dir_entry_found == NULL) {
+
+            block_idx ++;
+            continue;
+
+        }
+
+        // 在此扇区中找到目录项后 清除该目录并判断是否回收扇区 随后退出循环直接返回
+        ASSERT(dir_entry_cnt >= 1);
+        // 除了目录第一个扇区外 若该扇区上只有该目录项自己 则将整个扇区回收
+        if (dir_entry_cnt == 1 && !is_dir_first_block) {
+
+            // a 在位图中回收该块
+            uint32_t block_bitmap_idx = all_blocks[block_idx] - part->sb->data_start_lba;
+            bitmap_set(&part->block_bitmap, block_bitmap_idx, 0);
+            bitmap_sync(cur_part, block_bitmap_idx, BLOCK_BITMAP);
+
+            // b 将块地址从数组i_sectors或索引表中去掉
+            if (block_idx < 12) {
+
+                dir_inode->i_sectors[block_idx] = 0;
+
+            } else {
+
+                // 在一级间接索引表中去除该间接块地址 
+                // 先判断一级间接索引表中间接块的数量 如果只有一个间接块 连同间接索引表所在的块一同回收
+                uint32_t indirect_blocks = 0;
+                uint32_t indirect_block_idx = 12;
+                while (indirect_block_idx < 140) {
+
+                    if (all_blocks[indirect_block_idx ++] != 0) {
+
+                        indirect_blocks ++;
+
+                    }
+
+                }
+                ASSERT(indirect_blocks >= 1);       // 包括当前块
+                
+                if (indirect_blocks > 1) {
+
+                    // 间接索引表中还应该包括其他间接块 
+                    // 仅在索引表中擦除当前这个间接块地址
+                    all_blocks[block_idx] = 0;
+                    ide_write(part->my_disk, dir_inode->i_sectors[12], all_blocks + 12, 1);
+
+                } else {
+
+                    // 间接索表中就当前一个间接块 
+                    // 直接把间接索引表所在的块回收 然后擦除间接索引块地址
+                    // 回收间接索引表所在的块
+                    block_bitmap_idx = dir_inode->i_sectors[12] - part->sb->data_start_lba;
+                    bitmap_set(&part->block_bitmap, block_bitmap_idx, 0);
+                    bitmap_sync(cur_part, block_bitmap_idx, BLOCK_BITMAP);
+                    
+                    // 将间接索引表地址清零
+                    dir_inode->i_sectors[12] = 0;
+
+                }
+
+            }
+
+        } else {
+
+            // 仅将目录项清空
+            memset(dir_entry_found, 0, dir_entry_size);
+            ide_write(part->my_disk, all_blocks[block_idx], io_buf, 1);
+
+        }
+        // 更新i节点信息并同步到硬盘
+        ASSERT(dir_inode->i_size >= dir_entry_size);
+        dir_inode->i_size -= dir_entry_size;
+        memset(io_buf, 0, SECTOR_SIZE * 2);
+        inode_sync(part, dir_inode, io_buf);
+
+        return true;
+
+    }
+    // 如果未找到返回flase 出现这种情况应该是serch_file出错
+    return false;
+
+}
