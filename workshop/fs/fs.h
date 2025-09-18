@@ -14,7 +14,7 @@
 enum file_types {
 
     FT_UNKNOWN,             // 不支持的文件类型
-    FT_REFULAR,             // 普通文件
+    FT_REGULAR,             // 普通文件
     FT_DIRECTORY            // 目录
 
 };
@@ -65,5 +65,7 @@ int32_t sys_unlink(const char* pathname);
 int32_t sys_mkdir(const char* pathname);
 struct dir* sys_opendir(const char* name);
 int32_t sys_closedir(struct dir* dir);
+struct dir_entry* sys_readdir(struct dir* dir);
+void sys_rewinddir(struct dir* dir);
 
 #endif

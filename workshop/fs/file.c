@@ -155,7 +155,7 @@ int32_t file_create(struct dir* parent_dir, char* filename, uint8_t flag) {
     struct dir_entry new_dir_entry;
     memset(&new_dir_entry, 0, sizeof(struct dir_entry));
 
-    create_dir_entry(filename, inode_no, FT_REFULAR, &new_dir_entry);
+    create_dir_entry(filename, inode_no, FT_REGULAR, &new_dir_entry);
     // create_dir_entry只是内存操作不出意外 不会返回失败
     
     // 同步内存数据到硬盘 

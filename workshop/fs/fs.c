@@ -337,9 +337,9 @@ static int search_file(const char* pathname, struct path_search_record* searched
                 searched_record->parent_dir = parent_dir;
                 continue;
 
-            } else if (FT_REFULAR == dir_e.f_type) {
+            } else if (FT_REGULAR == dir_e.f_type) {
                 // 若是普通文件
-                searched_record->file_type = FT_REFULAR;
+                searched_record->file_type = FT_REGULAR;
                 return dir_e.i_no;
 
             } 
@@ -778,7 +778,7 @@ struct dir* sys_opendir(const char* name) {
 
     } else {
 
-         if (searched_record.file_type == FT_REFULAR) {
+         if (searched_record.file_type == FT_REGULAR) {
 
             printk("%s if regular file\n", name);
 
@@ -806,6 +806,21 @@ int32_t sys_closedir(struct dir* dir) {
     }
 
     return ret;
+
+}
+
+//读取目录dir的1个目录项 成功后返回其目录项地址 到文件尾返回NULL
+struct dir_entry* sys_readdir(struct dir* dir) {
+
+    ASSERT(dir != NULL);
+    return dir_read(dir);
+
+}
+
+// 把目录dir的指针dir_pos置0
+void sys_rewinddir(struct dir* dir) {
+
+    dir->dir_pos = 0;
 
 }
 
