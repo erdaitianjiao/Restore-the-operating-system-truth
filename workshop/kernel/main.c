@@ -66,14 +66,30 @@ int main(void) {
 
 
     // debug
-    //uint32_t fd = sys_open("/file2", O_RDWR);
+    // uint32_t fd = sys_open("/file2", O_RDWR);
     // struct task_struct* cur = running_thread();
     // int32_t test = cur->fd_table[fd];
-    //sys_write(fd, "dele word\n", 12);
+    // sys_write(fd, "dele word\n", 12);
     // printk("fd:%d\n", fd);
-    //sys_close("/file2");
+    // sys_close("/file2");
+    // printf("/file1 delete %s!\n", sys_unlink("/file2") == 0 ? "done" : "fail");
 
-    printf("/file1 delete %s!\n", sys_unlink("/file2") == 0 ? "done" : "fail");
+    printf("/dir1/subdir1 create %s\n", sys_mkdir("/dir1/subdir1") == 0 ? "done": "fail");
+    printf("/dir1 create %s\n", sys_mkdir("/dir1") == 0 ? "done": "fail");
+    printf("now /dir1/subdir1 create %s\n", sys_mkdir("/dir1/subdir1") == 0 ? "done": "fail");
+    int fd = sys_open("/dir1/subdir1/file2", O_CREAT | O_RDWR);
+
+    if (fd != -1) {
+
+        printf("/dir1/subdir1/file2 create done!\n");
+        sys_write(fd, "Catch me if you can!\n", 21);
+        sys_lseek(fd, 0, SEEK_SET);
+        char buf[32] = {0};
+        sys_read(fd, buf, 21);
+        printf("/dir1/subdir1/file2 says:\n%s", buf);
+        sys_close(fd); 
+
+    }
 
     while (1);
     return 0;

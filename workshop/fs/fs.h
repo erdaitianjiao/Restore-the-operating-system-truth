@@ -54,7 +54,7 @@ static void partition_format(struct partition* part);
 void filesys_init();
 static char* path_parse(char* pathname, char* name_store);
 int32_t path_depth_cnt(char* pathname);
-static int search_file(const char* pathname, struct path_search_record* searched_recored);
+static int search_file(const char* pathname, struct path_search_record* searched_record);
 int32_t sys_open(const char* pathname, uint8_t flags);
 static uint32_t fd_local2global(uint32_t local_fd);
 int32_t sys_close(int32_t fd);
@@ -62,5 +62,6 @@ int32_t sys_write(int32_t fd, const void* buf, uint32_t count);
 int32_t sys_read(int32_t fd, void* buf, uint32_t count);
 int32_t sys_lseek(int32_t fd, int32_t offset, uint8_t whence);
 int32_t sys_unlink(const char* pathname);
+int32_t sys_mkdir(const char* pathname);
 
 #endif
