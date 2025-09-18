@@ -333,9 +333,9 @@ bool delete_dir_entry(struct partition* part, struct dir* pdir, uint32_t inode_n
                     if ((dir_e + dir_entry_idx)->i_no == inode_no) {
                         
                         // debug
-                        printk("here\n");
-                        printk("name:%s\n", (dir_e + dir_entry_idx)->filename);
-                        printk("i_no:%d\n", (dir_e + dir_entry_idx)->i_no);
+                        // printk("here\n");
+                        // printk("name:%s\n", (dir_e + dir_entry_idx)->filename);
+                        // printk("i_no:%d\n", (dir_e + dir_entry_idx)->i_no);
 
                         // 如果找到此i节点 就将其记录在dir_entry_found
                         // 确保目录中只有一个标号为inode_no的inode 找到一次后dir_entry_found就不再是NULL
@@ -440,7 +440,7 @@ struct dir_entry* dir_read(struct dir* dir) {
 
     struct dir_entry* dir_e = (struct dir_entry*)dir->dir_buf;
     struct inode* dir_inode = dir->inode;
-    uint32_t all_blocks[140] = {0}, block_cnt = 0;
+    uint32_t all_blocks[140] = {0}, block_cnt = 12;
     uint32_t block_idx = 0, dir_entry_idx = 0;
 
     while (block_idx < 12) {
@@ -464,7 +464,7 @@ struct dir_entry* dir_read(struct dir* dir) {
     uint32_t dir_entrys_per_sec = SECTOR_SIZE / dir_entry_size;
 
     // 在目录大小内的遍历
-    while (dir->dir_pos < dir_inode->i_size) {
+    while (block_idx < block_cnt) {
 
         if (dir->dir_pos >= dir_inode->i_size) {
 
@@ -508,7 +508,46 @@ struct dir_entry* dir_read(struct dir* dir) {
         block_idx ++;
 
     }
-    
+
     return NULL;
  
+}
+
+// 判断目录是否为空
+bool dir_is_empty(struct dir* dir) {
+
+    struct inode* dir_inode = dir->inode;
+    // 若目录下只有..这两个目录 则目录为空
+    return (dir_inode->i_size == cur_part->sb->dir_entry_size * 2);
+
+}
+
+// 在父目录parent_dir中删除child_dir
+int32_t dir_remove(struct dir* parent_dir, struct dir* child_dir) {
+
+    struct inode* child_dir_inode = child_dir->inode;
+    // 空目录只在inode->i_sectors[0]中有扇区 其他扇区都为空
+    int32_t block_idx = 1;
+    while (block_idx < 13) {
+
+        ASSERT(child_dir_inode->i_sectors[block_idx] == 0);
+        block_idx ++;
+
+    }
+    void* io_buf = sys_malloc(SECTOR_SIZE * 2);
+    if (io_buf == NULL) {
+
+        printk("dir_remove: malloc for io_buf failed\n");
+        return -1;
+
+    }
+
+    // 在父目录parent_dir中删除子目录child_dir对应的目录项
+    delete_dir_entry(cur_part, parent_dir, child_dir_inode->i_no, io_buf);
+    
+    // 回收inode中i_sectors中所占用的扇区
+    inode_release(cur_part, child_dir_inode->i_no);
+    sys_free(io_buf);
+    return 0;
+
 }

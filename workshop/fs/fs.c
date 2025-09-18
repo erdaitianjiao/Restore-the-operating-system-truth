@@ -557,7 +557,7 @@ int32_t sys_lseek(int32_t fd, int32_t offset, uint8_t whence) {
 // 删除文件(非目录) 成功返回0 失败返回-1
 int32_t sys_unlink(const char* pathname) {
 
-    ASSERT(strlen(pathname) < MAX_FILE_NAME_LEN);
+    ASSERT(strlen(pathname) < MAX_PATH_LEN);
 
     // 先检查待删除的文件是否存在
     struct path_search_record searched_record;
@@ -768,25 +768,31 @@ struct dir* sys_opendir(const char* name) {
 
     // 先检查待打开的目录是否存在
     struct path_search_record searched_record;
+
     memset(&searched_record, 0, sizeof(struct path_search_record));
     int inode_no = search_file(name, &searched_record);
+
     struct dir* ret = NULL;
+
     if (inode_no == -1) {
+        
 
         //  如果找不到目录 提示不存在路径
-        printk("In %s, sub path %s not exist\n", name, searched_record, searched_record.parent_dir);
+        printk("In %s, sub path %s not exist\n", name, searched_record.searched_path);
 
     } else {
 
-         if (searched_record.file_type == FT_REGULAR) {
+        if (searched_record.file_type == FT_REGULAR) {
 
             printk("%s if regular file\n", name);
 
-         } else if (searched_record.file_type == FT_DIRECTORY) {
+        } else if (searched_record.file_type == FT_DIRECTORY) {
+
+
 
             ret = dir_open(cur_part, inode_no);
 
-         }
+        }
 
     }
     dir_close(searched_record.parent_dir);
@@ -821,6 +827,46 @@ struct dir_entry* sys_readdir(struct dir* dir) {
 void sys_rewinddir(struct dir* dir) {
 
     dir->dir_pos = 0;
+
+}
+
+// 删除空目录 成功返回0 失败返回-1
+int32_t sys_rmdir(const char* pathname) {
+
+    // 先检查待删除的文件是否存在
+    struct path_search_record searched_record;
+    memset(&searched_record, 0, sizeof(struct path_search_record));
+    int inode_no = search_file(pathname, &searched_record);
+    ASSERT(inode_no != 0);
+    int retval = -1;            // 默认返回值
+
+    if (inode_no == -1) {
+
+        printk("In %s, sub path %s not exist\n", pathname, searched_record.searched_path);
+
+    } else {
+
+        struct dir* dir = dir_open(cur_part, inode_no);
+        // 非空目录不能删除
+        if (!dir_is_empty(dir)) {
+            
+            printk("dir %s is not empty, it is not allowed to delete a nonempty directory\n", pathname);
+
+        } else {
+
+            if (!dir_remove(searched_record.parent_dir, dir)) {
+
+                retval = 0;
+
+            }
+
+        }
+        dir_close(dir);
+
+    }
+
+    dir_close(searched_record.parent_dir);
+    return retval;
 
 }
 
