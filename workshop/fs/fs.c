@@ -755,6 +755,60 @@ rollback:       // 因为某步骤操作失败而回滚
 
 }
 
+// 目录打开成功后返回目录指针 失败返回NULL
+struct dir* sys_opendir(const char* name) {
+
+    ASSERT(strlen(name) < MAX_FILE_NAME_LEN);
+    // 如果是根目录 直接返回&root_dir
+    if (name[0] == '/' && (name[1] == 0 || name[1] == '.')) {
+
+        return &root_dir;
+
+    }
+
+    // 先检查待打开的目录是否存在
+    struct path_search_record searched_record;
+    memset(&searched_record, 0, sizeof(struct path_search_record));
+    int inode_no = search_file(name, &searched_record);
+    struct dir* ret = NULL;
+    if (inode_no == -1) {
+
+        //  如果找不到目录 提示不存在路径
+        printk("In %s, sub path %s not exist\n", name, searched_record, searched_record.parent_dir);
+
+    } else {
+
+         if (searched_record.file_type == FT_REFULAR) {
+
+            printk("%s if regular file\n", name);
+
+         } else if (searched_record.file_type == FT_DIRECTORY) {
+
+            ret = dir_open(cur_part, inode_no);
+
+         }
+
+    }
+    dir_close(searched_record.parent_dir);
+    return ret;
+
+}
+
+// 成功关闭目录p_dir返回0 失败返回-1
+int32_t sys_closedir(struct dir* dir) {
+
+    int32_t ret = -1;
+    if (dir != NULL) {
+
+        dir_close(dir);
+        ret = 0;
+
+    }
+
+    return ret;
+
+}
+
 // 在磁盘上搜索文件系统 若没有则格式化分区创建文件系统
 void filesys_init() {
 
