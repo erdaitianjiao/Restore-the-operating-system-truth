@@ -126,7 +126,8 @@ void init_thread(struct task_struct* pthread, char* name, int prio) {
     }
 
 
-    // pthread->stack_magic = 0x19870916;                                   
+    // pthread->stack_magic = 0x19870916; 
+    pthread->cwd_inode_nr = 0;                                  
     pthread->stack_magic = 0x20050102;                                      // 自定义的魔数
 
 }

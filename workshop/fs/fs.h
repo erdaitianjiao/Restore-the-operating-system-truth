@@ -48,6 +48,15 @@ struct path_search_record {
 
 };
 
+// 文件属性结构体
+struct stat {
+
+    uint32_t st_ino;                            // inode编号
+    uint32_t st_size;                           // 尺寸
+    enum file_types st_filetype;                // 文件类型
+
+};
+
 extern struct partition* cur_part;
 
 static void partition_format(struct partition* part);
@@ -67,5 +76,9 @@ struct dir* sys_opendir(const char* name);
 int32_t sys_closedir(struct dir* dir);
 struct dir_entry* sys_readdir(struct dir* dir);
 void sys_rewinddir(struct dir* dir);
+static int get_child_dir_name(uint32_t p_inode_nr, uint32_t c_inode_nr, char* path, void* io_buf);
+char* sys_getcwd(char* buf, uint32_t size);
+int32_t sys_chdir(const char* path);
+int32_t sys_stat(const char* path, struct stat* buf);
 
 #endif
