@@ -4,6 +4,7 @@
 #include "io.h"
 #include "global.h"
 #include "ioqueue.h"
+#include "stdio-kernel.h"
 
 #define KBD_BUF_PORT 0x60               // 键盘buffer寄存器端口为x060
 
@@ -111,6 +112,7 @@ static char keymap[][2] = {
 // 键盘中断处理程序
 static void intr_keyboard_handler(void) {
 
+
     // 此次中断发生前的上一次中断 以下任意三个建是否有按下
     bool ctrl_down_last = ctrl_status;
     bool shift_down_last = shift_status;
@@ -213,6 +215,7 @@ static void intr_keyboard_handler(void) {
         if (cur_char) {
             
             // 若kbd_buf未满并且等待加入的cur_char不为0
+
             // 则将其加入缓冲区kdb_buf中
             if (!ioq_full(&kbd_buf)) {
                 
@@ -245,7 +248,7 @@ static void intr_keyboard_handler(void) {
 
         } else {
 
-            put_str("unknow key\n");
+            put_str("unknown key\n");
 
         }
  

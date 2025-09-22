@@ -68,5 +68,6 @@ static void page_table_pte_remove(uint32_t vaddr);
 static void vaddr_remove(enum pool_flags pf, void* _vaddr, uint32_t pg_cnt);
 void mfree_page(enum pool_flags pf, void* _vaddr, uint32_t pg_cnt);
 void sys_free(void* ptr);
+void* get_a_page_without_opvaddrbitmap(enum pool_flags pf, uint32_t vaddr);
 
 #endif

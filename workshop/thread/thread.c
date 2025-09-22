@@ -8,6 +8,7 @@
 #include "print.h"
 #include "process.h"
 #include "sync.h"
+#include "syscall.h"
 
 #define PG_SIZE 4096
 
@@ -20,6 +21,7 @@ static struct list_elem* thread_tag;        // 用于保存队列中的线程节
 struct lock pid_lock;                       // 分配pid锁
 
 extern void switch_to(struct task_struct* cur, struct task_struct* next);
+extern void init(void);
 
 // 系统空闲的时候运行的线程
 static void idle(void* arg UNUSED) {
@@ -127,7 +129,8 @@ void init_thread(struct task_struct* pthread, char* name, int prio) {
 
 
     // pthread->stack_magic = 0x19870916; 
-    pthread->cwd_inode_nr = 0;                                  
+    pthread->cwd_inode_nr = 0;
+    pthread->parent_pid = -1;                                  
     pthread->stack_magic = 0x20050102;                                      // 自定义的魔数
 
 }
@@ -277,6 +280,13 @@ void thread_yield(void) {
 
 }
 
+// 获取新的pid
+pid_t fork_pid(void) {
+
+    return allocate_pid();
+
+}
+
 // 初始化线程环境
 void thread_init(void) {
 
@@ -285,7 +295,10 @@ void thread_init(void) {
     list_init(&thread_all_list);
     lock_init(&pid_lock);
     
-    
+    // 创建第一个用户进程
+    process_execute(init, "init");
+    // 放在第一个初始化 这是第一个进程 init进程pid为1
+
     // 将当前main函数创建为线程
     make_main_thread();
     

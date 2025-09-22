@@ -22,7 +22,8 @@ void init_all(void) {
     console_init();             // 控制态初始化最好在开中断之前
     keyboard_init();            // 初始化键盘
     tss_init();                 // tss初始化
-    syscall_init();             // 初始化系统调用 
+    syscall_init();             // 初始化系统调用
+    intr_enable();              // 后面需要 
     ide_init();                 // 初始化硬盘
     filesys_init();             // 文件系统初始化
 

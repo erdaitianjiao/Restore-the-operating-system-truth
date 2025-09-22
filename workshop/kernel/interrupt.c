@@ -63,7 +63,6 @@ static void pic_init(void) {
 
     // 打开从片上的IRQ14 此引脚接收硬盘控制器的中断
     outb(PIC_S_DATA, 0xbf);
-    
 
     put_str("   pic_init done\n");
 
@@ -96,7 +95,7 @@ static void idt_desc_init(void) {
     // 单独处理系统调用 系统调用对应的中断门dp1是3
     make_idt_desc(&idt[lastindex], IDT_DESC_ATTR_DPL3, syscall_handler);
 
-    put_str("   idt_desc_init_done\n");
+    put_str("   idt_desc_init done\n");
 
 }
 

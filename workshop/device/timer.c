@@ -45,8 +45,12 @@ static void intr_timer_handler(void) {
     struct task_struct* cur_thread = running_thread();
 
     // debug
-    // printk("magic numberis: %x", cur_thread->stack_magic);
-
+    // if (cur_thread->stack_magic != 0x20050102) {
+        
+    //     printk("magic numberis: %x", cur_thread->stack_magic);
+    
+    // }
+    
     ASSERT(cur_thread->stack_magic == 0x20050102);              // 检查栈时候溢出
 
     cur_thread->elapsed_ticks ++;                               // 记录此线程占用cpu的时间
