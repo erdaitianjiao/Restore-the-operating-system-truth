@@ -12,10 +12,15 @@
 #define MAX_ARG_NR 16           // 加上命令外 最多支持15个参数
 
 // 存储输入的指令
-static char cmd_line[cmd_len] = {0};
+static char cmd_line[MAX_PATH_LEN] = {0};
+char final_path[MAX_PATH_LEN] = {0};      // 用于洗路径时的缓冲
 
 // 用来记录当前目录 是当前目录的缓存 每次执行cd会更新此内容
-char cwd_cache[64] = {0};
+char cwd_cache[MAX_PATH_LEN] = {0};
+
+
+char* argv[MAX_ARG_NR];
+int32_t argc = -1;
 
 // 输出提示符
 void print_prompt(void) {
@@ -33,6 +38,27 @@ static void readline(char* buf, int32_t count) {
 
         // 在不出错情况下 知道找到回车符才返回
         switch (*pos) {
+
+            // ctrl + l 清屏
+            case 'l' - 'a':
+                // 1 先将当前字符'l' - 'a'置为0
+                *pos = 0;
+                // 2 再将屏幕清空
+                clear();
+                // 3 打印提示符
+                print_prompt();
+                printf("%s", buf);
+                break;
+            
+            // ctrl + u 清调输入
+            case 'u' - 'a':
+                while (buf != pos) {
+
+                    putchar('\b');
+                    *(pos --) = 0;
+
+                }
+                break;
 
             case '\n':
             case '\r':
@@ -61,6 +87,63 @@ static void readline(char* buf, int32_t count) {
 
 }
 
+// 分析字符串cmd_str中以token为分隔的单词，将各单词的指针存入argv数组
+static int32_t cmd_parse(char* cmd_str, char** argv, char token) {
+
+    ASSERT(cmd_str != NULL);
+    int32_t arg_idx = 0;
+    while (arg_idx < MAX_ARG_NR) {
+
+        argv[arg_idx] = NULL;
+        arg_idx ++;
+
+    }
+    char* next = cmd_str;
+    int32_t argc = 0;
+
+    // 外层循环处理整个命令行
+    while (*next) {
+
+        // 去除命令字或参数之间的空格
+        while (*next == token) {
+
+            next ++;
+
+        }
+        // 处理最后一个参数后面接空格的情况
+        if (*next == 0) {
+
+            break;
+
+        }
+        argv[argc] = next;
+
+        // 内层循环处理命令行中的每个命令即参数
+        while (*next && *next != token) {
+
+            // 在字符串结束前找单词分割符
+            next ++;
+
+        }
+        // 如果未结束 是token字符 使token变成0
+        if (*next) {
+
+            *next ++ =  0;
+
+        }
+        // 避免argv数组访问越界 参数过多返回0
+        if (argc > MAX_ARG_NR) {
+
+            return -1;
+
+        }
+        argc ++;
+
+    }
+    return argc;
+
+}
+
 // 简单的shell
 void my_shell(void) {
 
@@ -68,13 +151,31 @@ void my_shell(void) {
     while (1) {
 
         print_prompt();
-        memset(cmd_line, 0, cmd_len);
-        readline(cmd_line, cmd_len);
+        memset(final_path, 0, MAX_PATH_LEN);
+        memset(cmd_line, 0, MAX_PATH_LEN);
+        readline(cmd_line, MAX_PATH_LEN);
         if (cmd_line[0] == 0) {
 
             continue;
 
         }
+        argc = -1;
+        argc = cmd_parse(cmd_line, argv, ' ');
+        if (argc == -1) {
+
+            printf("num of argument exceed %d\n", MAX_ARG_NR);
+            continue;
+
+        }
+
+        int32_t arg_idx = 0;
+        while (arg_idx < argc) {
+
+            printf("%s ", argv[arg_idx]);
+            arg_idx ++;
+
+        }
+        printf("\n");
 
     }
     panic("my_shell: should not be here");

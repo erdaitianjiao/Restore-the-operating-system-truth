@@ -72,6 +72,7 @@ int32_t sys_read(int32_t fd, void* buf, uint32_t count);
 int32_t sys_lseek(int32_t fd, int32_t offset, uint8_t whence);
 int32_t sys_unlink(const char* pathname);
 int32_t sys_mkdir(const char* pathname);
+int32_t sys_rmdir(const char* pathname);
 struct dir* sys_opendir(const char* name);
 int32_t sys_closedir(struct dir* dir);
 struct dir_entry* sys_readdir(struct dir* dir);

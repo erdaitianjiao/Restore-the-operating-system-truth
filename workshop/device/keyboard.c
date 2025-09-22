@@ -214,6 +214,15 @@ static void intr_keyboard_handler(void) {
         // 只处理ASCII码不为0的键
         if (cur_char) {
             
+            // 加入ctrl+l 和 ctrl+u的处理
+            // 处理清屏和删除输入的快捷方式
+            if ((ctrl_down_last && cur_char == 'l') || (ctrl_down_last && cur_char == 'u')) {
+
+                cur_char -= 'a';
+
+            }
+
+
             // 若kbd_buf未满并且等待加入的cur_char不为0
 
             // 则将其加入缓冲区kdb_buf中
