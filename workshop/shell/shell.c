@@ -206,6 +206,10 @@ void my_shell(void) {
 
             buildin_rm(argc, argv);
 
+        } else if (!strcmp("tianjiao", argv[0])) {
+
+            buildin_tianjiao(argc, argv);
+
         } else {
 
             printf("external command\n");

@@ -152,12 +152,6 @@ char* buildin_cd(uint32_t argc, char** argv) {
 // ls命令内部构建函数
 void buildin_ls(uint32_t argc, char** argv) {
 
-    // debug
-    // struct task_struct * cur = running_thread();
-    // while (1) {
-    //     if (cur->pgdir == NULL) write(1, "kernel\n", strlen("kernel\n"));
-    //     else write(1, "user\n", strlen("user\n"));
-    // }
 
     char* pathname = NULL;
     struct stat file_stat;
@@ -412,5 +406,45 @@ int32_t buildin_rm(uint32_t argc, char** argv) {
         }
 
     }
+
+}
+
+char tianasc[] = 
+"#   _   _              _ _ \n"             
+"#  | |_(_) __ _ _ __  (_|_) __ _  ___      \n"  
+"#  | __| |/ _` | '_ \ | | |/ _` |/ _ \     \n" 
+"#  | |_| | (_| | | | || | | (_| | (_) |    \n"
+"#   \__|_|\__,_|_| |_|/ |_|\__,_|\___/     \n" 
+"#                   |__/                   \n";
+
+char tianasc2[] =
+"           d8,                       d8,   d8,                     \n"                  
+"    d8P   `8P                       `8P   `8P\"                    \n"                  
+" d888888P                                                          \n"
+"   ?88'    88b d888b8b    88bd88b   d88    88b d888b8b   d8888b    \n"
+"   88P     88Pd8P' ?88    88P' ?8b  ?88    88Pd8P' ?88  d8P' ?88   \n"
+"   88b    d88 88b  ,88b  d88   88P   88b  d88 88b  ,88b 88b  d88   \n"
+"   `?8b  d88' `?88P'`88bd88'   88b   `88bd88' `?88P'`88b`?8888P'   \n"
+"                                      )88                          \n"
+"                                     ,88P                          \n"
+"                                  `?888P                           \n";
+
+char tianasc3[] =                     
+"         88                           88  88 \n"
+"  ,d     \"\"                           \"\"  \"\" \n"
+"  88 \n"
+"MM88MMM  88  ,adPPYYba,  8b,dPPYba,   88  88  ,adPPYYba,   ,adPPYba,\n"
+"  88     88  \"\"     `Y8  88P'   `\"8a  88  88  \"\"     `Y8  a8\"     \"8a\n"
+"  88     88  ,adPPPPP88  88       88  88  88  ,adPPPPP88  8b       d8\n"
+"  88,    88  88,    ,88  88       88  88  88  88,    ,88  \"8a,   ,a8\"\n"
+"  \"Y888  88  `\"8bbdP\"Y8  88       88  88  88  `\"8bbdP\"Y8   `\"YbbdP\"'\n"
+"                                     ,88  \n"
+"                                   888P\" \n";
+
+void buildin_tianjiao(uint32_t argc, char** argv) {
+
+    // printf("%s", tianasc3);
+    printf("%s", tianasc2);
+    return;
 
 }

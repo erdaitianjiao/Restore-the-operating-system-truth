@@ -341,7 +341,7 @@ int search_file(const char* pathname, struct path_search_record* searched_record
                 parent_dir = dir_open(cur_part, dir_e.i_no);        // 更新父目录
 
                 // debug
-                printk("open_dir %d\n", parent_dir->inode->i_no);
+                // printk("open_dir %d\n", parent_dir->inode->i_no);
 
                 searched_record->parent_dir = parent_dir;
                 continue;
