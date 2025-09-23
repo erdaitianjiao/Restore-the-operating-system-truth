@@ -229,7 +229,7 @@ static void partition_format(struct partition* part) {
 }
 
 // 将最上层的路径名称解析出来
-static char* path_parse(char* pathname, char* name_store) {
+char* path_parse(char* pathname, char* name_store) {
 
     if (pathname[0] = '/') {
 
@@ -284,7 +284,7 @@ int32_t path_depth_cnt(char* pathname) {
 }
 
 // 搜索文件pathname 若找到则返回其inode号 否则返回-1
-static int search_file(const char* pathname, struct path_search_record* searched_record) {
+int search_file(const char* pathname, struct path_search_record* searched_record) {
 
     // 如果待查找的是根目录 为了避免无用查找 直接返回已知根目录信息
     if (!strcmp(pathname, "/") || !strcmp(pathname, "/.") || !strcmp(pathname, "/..")) {

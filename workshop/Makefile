@@ -16,7 +16,7 @@ OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
 	  $(BUILD_DIR)/syscall.o $(BUILD_DIR)/syscall-init.o $(BUILD_DIR)/stdio.o \
 	  $(BUILD_DIR)/ide.o $(BUILD_DIR)/stdio-kernel.o $(BUILD_DIR)/fs.o \
 	  $(BUILD_DIR)/file.o $(BUILD_DIR)/dir.o $(BUILD_DIR)/inode.o $(BUILD_DIR)/fork.o \
-	  $(BUILD_DIR)/shell.o
+	  $(BUILD_DIR)/shell.o $(BUILD_DIR)/buildin_cmd.o
 
 # c语言代码编译
 
@@ -147,6 +147,10 @@ $(BUILD_DIR)/fork.o: userprog/fork.c userprog/fork.h thread/thread.h lib/stdint.
 
 $(BUILD_DIR)/shell.o: shell/shell.c shell/shell.h lib/stdint.h fs/fs.h \
     	lib/user/syscall.h lib/stdio.h lib/stdint.h kernel/global.h
+	$(CC) $(CFLAGS) $< -o $@
+
+$(BUILD_DIR)/buildin_cmd.o: shell/buildin_cmd.c shell/buildin_cmd.h lib/stdint.h \
+  	lib/user/syscall.h lib/stdio.h lib/stdint.h lib/string.h fs/fs.h
 	$(CC) $(CFLAGS) $< -o $@
 
 # 汇编代码编译

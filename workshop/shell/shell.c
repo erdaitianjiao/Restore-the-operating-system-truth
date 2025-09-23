@@ -7,6 +7,7 @@
 #include "file.h"
 #include "shell.h"
 #include "string.h"
+#include "buildin_cmd.h"
 
 #define cmd_len 128             // 最大支持128个字符的命令行输入
 #define MAX_ARG_NR 16           // 加上命令外 最多支持15个参数
@@ -159,6 +160,7 @@ void my_shell(void) {
             continue;
 
         }
+        
         argc = -1;
         argc = cmd_parse(cmd_line, argv, ' ');
         if (argc == -1) {
@@ -166,12 +168,14 @@ void my_shell(void) {
             printf("num of argument exceed %d\n", MAX_ARG_NR);
             continue;
 
-        }
+        }  
 
+        char buf[MAX_PATH_LEN];
         int32_t arg_idx = 0;
         while (arg_idx < argc) {
 
-            printf("%s ", argv[arg_idx]);
+            make_clear_abs_path(argv[arg_idx], buf);
+            printf("%s -> %s", argv[arg_idx], buf);
             arg_idx ++;
 
         }
