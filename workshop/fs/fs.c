@@ -286,6 +286,7 @@ int32_t path_depth_cnt(char* pathname) {
 // 搜索文件pathname 若找到则返回其inode号 否则返回-1
 int search_file(const char* pathname, struct path_search_record* searched_record) {
 
+
     // 如果待查找的是根目录 为了避免无用查找 直接返回已知根目录信息
     if (!strcmp(pathname, "/") || !strcmp(pathname, "/.") || !strcmp(pathname, "/..")) {
 
@@ -323,7 +324,9 @@ int search_file(const char* pathname, struct path_search_record* searched_record
         strcat(searched_record->searched_path, name);
 
         // 在所给的目录中查找文件
+
         if (search_dir_entry(cur_part, parent_dir, name, &dir_e)) {
+
             memset(name, 0, MAX_FILE_NAME_LEN);
             // 若sub_path不等于NULL 也就是未结束时继续拆分路径
             if (sub_path) {
@@ -336,6 +339,10 @@ int search_file(const char* pathname, struct path_search_record* searched_record
                 parent_inode_no = parent_dir->inode->i_no;
                 dir_close(parent_dir);
                 parent_dir = dir_open(cur_part, dir_e.i_no);        // 更新父目录
+
+                // debug
+                printk("open_dir %d\n", parent_dir->inode->i_no);
+
                 searched_record->parent_dir = parent_dir;
                 continue;
 
@@ -355,8 +362,12 @@ int search_file(const char* pathname, struct path_search_record* searched_record
         }
 
     }
+
     // 执行到这里 必然是遍历了完成路径 并且查找的文件或目录只有同名目录存在
+
+
     dir_close(searched_record->parent_dir);
+
 
     // 保存被查找目录的直接父目录
     searched_record->parent_dir = dir_open(cur_part, parent_inode_no);
@@ -1035,6 +1046,7 @@ int32_t sys_chdir(const char* path) {
     struct path_search_record searched_record;
     memset(&searched_record, 0, sizeof(struct path_search_record));
     int inode_no = search_file(path, &searched_record);
+
     if (inode_no != -1) {
 
         if (searched_record.file_type == FT_DIRECTORY) {

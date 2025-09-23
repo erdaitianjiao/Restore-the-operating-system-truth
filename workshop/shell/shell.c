@@ -68,7 +68,7 @@ static void readline(char* buf, int32_t count) {
                 return;
             
             case '\b':
-                if (buf[0] != '\b') {
+                if (cmd_line[0] != '\b') {
 
                     -- pos;
                     putchar('\b');
@@ -169,17 +169,48 @@ void my_shell(void) {
             continue;
 
         }  
+        if (!strcmp("ls", argv[0])) {
 
-        char buf[MAX_PATH_LEN];
-        int32_t arg_idx = 0;
-        while (arg_idx < argc) {
+	        buildin_ls(argc, argv);
 
-            make_clear_abs_path(argv[arg_idx], buf);
-            printf("%s -> %s", argv[arg_idx], buf);
-            arg_idx ++;
+        } else if (!strcmp("cd", argv[0])) {
+
+	        if (buildin_cd(argc, argv) != NULL) {
+
+                memset(cwd_cache, 0, MAX_PATH_LEN);
+                strcpy(cwd_cache, final_path);
+	    
+            } 
+
+        } else if (!strcmp("pwd", argv[0])) {
+
+            buildin_pwd(argc, argv);
+
+        } else if (!strcmp("ps", argv[0])) {
+
+            buildin_ps(argc, argv);
+
+        } else if (!strcmp("clear", argv[0])) {
+
+            buildin_clear(argc, argv);
+
+        } else if (!strcmp("mkdir", argv[0])){
+
+            buildin_mkdir(argc, argv);
+
+        } else if (!strcmp("rmdir", argv[0])){
+
+            buildin_rmdir(argc, argv);
+
+        } else if (!strcmp("rm", argv[0])) {
+
+            buildin_rm(argc, argv);
+
+        } else {
+
+            printf("external command\n");
 
         }
-        printf("\n");
 
     }
     panic("my_shell: should not be here");

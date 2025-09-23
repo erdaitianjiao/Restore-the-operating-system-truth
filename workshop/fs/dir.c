@@ -53,6 +53,7 @@ bool search_dir_entry(struct partition* part, struct dir* pdir, const char* name
     }
     block_idx = 0;
 
+
     if (pdir->inode->i_sectors[12] != 0) {
 
         // 若含有一级间接块表

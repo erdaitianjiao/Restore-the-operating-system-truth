@@ -106,6 +106,8 @@ struct inode* inode_open(struct partition* part, uint32_t inode_no) {
     struct inode* inode_found;
 
     while (elem != &part->open_inodes.tail) {
+        
+        inode_found = elem2entry(struct inode, inode_tag, elem);
 
         if (inode_found->i_no == inode_no) {
 
@@ -154,6 +156,7 @@ struct inode* inode_open(struct partition* part, uint32_t inode_no) {
     }
 
     memcpy(inode_found, inode_buf + inode_pos.off_size, sizeof(struct inode));
+    list_push(&part->open_inodes, &inode_found->inode_tag);
     inode_found->i_open_cnts = 1;
 
     sys_free(inode_buf);

@@ -105,6 +105,12 @@ uint32_t printf(const char* format, ...) {
 
     vsprintf(buf, format, args);
     va_end(args);
+
+    // debug
+    // struct task_struct * cur = running_thread();
+    // if (cur->pgdir == NULL) write(1, "kernel\n", strlen("kernel\n"));
+    // else write(1, "user\n", strlen("user\n"));
+
     return write(1, buf, strlen(buf));
 
 }

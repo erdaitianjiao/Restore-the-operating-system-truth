@@ -372,7 +372,7 @@ static bool elem2thread_info(struct list_elem* pelem, int arg UNUSED) {
 // 打印任务列表
 void sys_ps(void) {
 
-    char* ps_title = "\nPID           PPID          STAT            TICKS          COMMAND\n";
+    char* ps_title = "PID           PPID          STAT            TICKS          COMMAND\n";
     sys_write(stdout_no, ps_title, strlen(ps_title));
     list_traversal(&thread_all_list, elem2thread_info, 0);
 
@@ -388,11 +388,12 @@ void thread_init(void) {
     
     // 创建第一个用户进程
     process_execute(init, "init");
+    
     // 放在第一个初始化 这是第一个进程 init进程pid为1
 
     // 将当前main函数创建为线程
     make_main_thread();
-    
+
     // 创建idle线程
     idle_thread = thread_start("idle", 10, idle, NULL);
 
